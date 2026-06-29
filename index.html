@@ -124,8 +124,8 @@
           <h2>Login Flex Music</h2>
           <p>
             Área reservada para equipe, artistas, produtores e parceiros da
-            gravadora. Nesta primeira versão o painel é visual; depois podemos
-            conectar autenticação real, dashboard e arquivos internos.
+            gravadora. O acesso usa Supabase Auth e libera o backstage para
+            contas cadastradas.
           </p>
         </div>
 
@@ -134,18 +134,18 @@
             <span class="login-mark">FM</span>
             <div>
               <h3>Entrar</h3>
-              <p>Acesso ao backstage</p>
+              <p>Acesso ao backstage Flex Music</p>
             </div>
           </div>
 
           <label>
             E-mail
-            <input type="email" name="email" autocomplete="email" placeholder="voce@flexmusic.com">
+            <input type="email" name="email" autocomplete="email" placeholder="voce@flexmusic.com" required>
           </label>
 
           <label>
             Senha
-            <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha">
+            <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha" required>
           </label>
 
           <div class="login-row">
@@ -156,9 +156,34 @@
             <a href="mailto:contato@flexmusic.com">Suporte</a>
           </div>
 
-          <button class="button primary" type="submit">Acessar portal</button>
+          <button class="button primary" id="loginButton" type="submit">Acessar portal</button>
+          <button class="button secondary" id="signupButton" type="button">Criar conta</button>
           <p class="login-message" id="loginMessage" role="status" aria-live="polite"></p>
         </form>
+
+        <section class="account-panel" id="accountPanel" hidden>
+          <div class="login-header">
+            <span class="login-mark">FM</span>
+            <div>
+              <h3>Backstage ativo</h3>
+              <p id="accountEmail">Sessão conectada</p>
+            </div>
+          </div>
+
+          <div class="portal-status">
+            <span>Portal</span>
+            <strong>Online</strong>
+          </div>
+          <div class="portal-status">
+            <span>Ambiente</span>
+            <strong>FlexMusic Supabase</strong>
+          </div>
+          <p>
+            Próximo passo: criar dashboard com artistas, lançamentos,
+            arquivos, convites e permissões por função.
+          </p>
+          <button class="button secondary" id="logoutButton" type="button">Sair</button>
+        </section>
       </section>
     </main>
 
@@ -168,6 +193,7 @@
       <span id="year"></span>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
   </body>
 </html>

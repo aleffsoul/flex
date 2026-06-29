@@ -54,6 +54,10 @@ input {
   font: inherit;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .site-header {
   position: sticky;
   top: 0;
@@ -262,6 +266,11 @@ h3 {
   font-weight: 900;
 }
 
+.button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .button.primary {
   background: var(--cyan);
   color: #061015;
@@ -297,7 +306,8 @@ h3 {
 
 .identity-grid article,
 .artist-card,
-.login-card {
+.login-card,
+.account-panel {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: rgba(23, 26, 35, 0.82);
@@ -319,7 +329,8 @@ h3 {
 
 .identity-grid p,
 .artist-card p,
-.login-card p {
+.login-card p,
+.account-panel p {
   margin: 0;
   color: var(--muted);
 }
@@ -375,7 +386,8 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
-.login-card {
+.login-card,
+.account-panel {
   display: grid;
   gap: 18px;
   padding: clamp(22px, 4vw, 34px);
@@ -453,6 +465,28 @@ h3 {
 .login-message {
   min-height: 24px;
   font-weight: 800;
+}
+
+.login-message[data-type="error"] {
+  color: var(--pink);
+}
+
+.login-message[data-type="success"] {
+  color: var(--lime);
+}
+
+.portal-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+}
+
+.portal-status strong {
+  color: var(--lime);
 }
 
 .site-footer {
