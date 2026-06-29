@@ -9,11 +9,6 @@ const loginMessage = document.querySelector("#loginMessage");
 const accountPanel = document.querySelector("#accountPanel");
 const accountEmail = document.querySelector("#accountEmail");
 
-const supabaseClient = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
 if (year) {
   year.textContent = new Date().getFullYear();
 }
@@ -23,6 +18,16 @@ function setMessage(text, type = "info") {
   loginMessage.textContent = text;
   loginMessage.dataset.type = type;
 }
+
+if (!window.supabase) {
+  setMessage("Não foi possível carregar o Supabase. Recarregue a página em alguns segundos.", "error");
+  throw new Error("Supabase client library was not loaded.");
+}
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 function setLoading(isLoading) {
   const buttons = [loginForm?.querySelector("button[type='submit']"), signupButton, logoutButton];
