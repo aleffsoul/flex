@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <header class="site-header">
+    <header class="site-header" data-public-shell>
       <a class="brand" href="#inicio" aria-label="Flex Music - início">
         <span class="brand-mark" aria-hidden="true">
           <span></span>
@@ -28,7 +28,7 @@
       </nav>
     </header>
 
-    <main>
+    <main data-public-shell>
       <section class="hero" id="inicio">
         <div class="hero-media" aria-hidden="true">
           <div class="soundwave">
@@ -161,33 +161,185 @@
           <p class="login-message" id="loginMessage" role="status" aria-live="polite"></p>
         </form>
 
-        <section class="account-panel" id="accountPanel" hidden>
-          <div class="login-header">
-            <span class="login-mark">FM</span>
-            <div>
-              <h3>Backstage ativo</h3>
-              <p id="accountEmail">Sessão conectada</p>
-            </div>
-          </div>
-
-          <div class="portal-status">
-            <span>Portal</span>
-            <strong>Online</strong>
-          </div>
-          <div class="portal-status">
-            <span>Ambiente</span>
-            <strong>FlexMusic Supabase</strong>
-          </div>
-          <p>
-            Próximo passo: criar dashboard com artistas, lançamentos,
-            arquivos, convites e permissões por função.
-          </p>
-          <button class="button secondary" id="logoutButton" type="button">Sair</button>
-        </section>
       </section>
     </main>
 
-    <footer class="site-footer">
+    <section class="app-shell" id="appShell" hidden>
+      <aside class="app-sidebar">
+        <a class="brand app-brand" href="#dashboard" aria-label="Flex Music Backstage">
+          <span class="brand-mark" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+          <span class="brand-name">Flex Music</span>
+        </a>
+
+        <nav class="app-nav" aria-label="Menu da área logada">
+          <button class="app-nav-item active" type="button" data-view="dashboard">Visão Geral</button>
+          <button class="app-nav-item" type="button" data-view="artists">Artistas</button>
+          <button class="app-nav-item" type="button" data-view="calendar">Calendário</button>
+          <button class="app-nav-item" type="button" data-view="profile">Perfil</button>
+        </nav>
+
+        <div class="app-user">
+          <span id="appUserEmail">Sessão conectada</span>
+          <button class="button secondary" id="logoutButton" type="button">Sair</button>
+        </div>
+      </aside>
+
+      <main class="app-main">
+        <section class="app-view active" id="dashboardView" data-view-panel="dashboard">
+          <div class="app-heading">
+            <div>
+              <p class="eyebrow">Dashboard</p>
+              <h2>Visão Geral</h2>
+            </div>
+            <p>Indicadores do catálogo virtual e próximos movimentos da label.</p>
+          </div>
+
+          <div class="metric-grid">
+            <article class="metric-card">
+              <span>Artistas virtuais</span>
+              <strong id="metricArtists">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Músicas no catálogo</span>
+              <strong id="metricSongs">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Lançamentos agendados</span>
+              <strong id="metricReleases">0</strong>
+            </article>
+            <article class="metric-card">
+              <span>Streams acumulados</span>
+              <strong id="metricStreams">0</strong>
+            </article>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="panel">
+              <div class="panel-header">
+                <h3>Top músicas</h3>
+                <span>Streams totais</span>
+              </div>
+              <div class="song-list" id="topSongs"></div>
+            </article>
+
+            <article class="panel">
+              <div class="panel-header">
+                <h3>Próximos lançamentos</h3>
+                <span>Fila ativa</span>
+              </div>
+              <div class="release-list" id="dashboardReleases"></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="app-view" id="artistsView" data-view-panel="artists">
+          <div class="app-heading">
+            <div>
+              <p class="eyebrow">Catálogo</p>
+              <h2>Artistas</h2>
+            </div>
+            <p>Selecione um artista para ver músicas, redes sociais e estatísticas.</p>
+          </div>
+
+          <div class="artists-workspace">
+            <div class="panel artist-directory">
+              <div class="panel-header">
+                <h3>Roster</h3>
+                <span id="artistCountLabel">0 artistas</span>
+              </div>
+              <div class="artist-list" id="artistList"></div>
+            </div>
+
+            <div class="panel artist-detail" id="artistDetail"></div>
+          </div>
+        </section>
+
+        <section class="app-view" id="calendarView" data-view-panel="calendar">
+          <div class="app-heading">
+            <div>
+              <p class="eyebrow">Planejamento</p>
+              <h2>Calendário</h2>
+            </div>
+            <p>Clique em um dia para agendar um novo lançamento.</p>
+          </div>
+
+          <div class="calendar-layout">
+            <div class="panel">
+              <div class="calendar-toolbar">
+                <button class="icon-button" id="prevMonth" type="button" aria-label="Mês anterior">‹</button>
+                <h3 id="calendarTitle">Mês</h3>
+                <button class="icon-button" id="nextMonth" type="button" aria-label="Próximo mês">›</button>
+              </div>
+              <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+
+            <aside class="panel release-queue">
+              <div class="panel-header">
+                <h3>Fila de lançamentos</h3>
+                <span>Próximos</span>
+              </div>
+              <form class="compact-form" id="releaseForm">
+                <input type="date" name="date" required>
+                <input type="text" name="title" placeholder="Título" required>
+                <select name="artistId" id="releaseArtistSelect" required></select>
+                <input type="text" name="distributor" placeholder="Distribuidora" required>
+                <button class="button primary" type="submit">Agendar</button>
+              </form>
+              <div class="release-list" id="releaseQueue"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="app-view" id="profileView" data-view-panel="profile">
+          <div class="app-heading">
+            <div>
+              <p class="eyebrow">Conta</p>
+              <h2>Perfil</h2>
+            </div>
+            <p>Configurações do usuário e preferências operacionais.</p>
+          </div>
+
+          <form class="panel profile-form" id="profileForm">
+            <label>
+              Nome
+              <input type="text" name="name" placeholder="Nome completo">
+            </label>
+            <label>
+              E-mail
+              <input type="email" name="email" placeholder="email@flexmusic.com">
+            </label>
+            <label>
+              Telefone
+              <input type="tel" name="phone" placeholder="+55 11 90000-0000">
+            </label>
+            <label>
+              País
+              <input type="text" name="country" placeholder="Brasil">
+            </label>
+            <label>
+              Moeda
+              <select name="currency">
+                <option value="BRL">BRL - Real brasileiro</option>
+                <option value="USD">USD - Dólar americano</option>
+                <option value="EUR">EUR - Euro</option>
+              </select>
+            </label>
+            <label>
+              Nova senha
+              <input type="password" name="newPassword" placeholder="Enviar alteração de senha">
+            </label>
+            <button class="button primary" type="submit">Salvar perfil</button>
+            <p class="login-message" id="profileMessage" role="status" aria-live="polite"></p>
+          </form>
+        </section>
+      </main>
+    </section>
+
+    <footer class="site-footer" data-public-shell>
       <span>Flex Music</span>
       <span>Virtual artists label</span>
       <span id="year"></span>

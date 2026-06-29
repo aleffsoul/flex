@@ -54,6 +54,10 @@ input {
   font: inherit;
 }
 
+select {
+  font: inherit;
+}
+
 [hidden] {
   display: none !important;
 }
@@ -498,10 +502,415 @@ h3 {
   border-top: 1px solid var(--line);
 }
 
+.app-shell {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  min-height: 100svh;
+  background: rgba(8, 9, 13, 0.94);
+}
+
+.app-sidebar {
+  position: sticky;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  height: 100svh;
+  padding: 24px;
+  border-right: 1px solid var(--line);
+  background: rgba(17, 19, 26, 0.96);
+}
+
+.app-brand {
+  flex-shrink: 0;
+}
+
+.app-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.app-nav-item,
+.artist-list-item,
+.song-row,
+.calendar-day,
+.icon-button {
+  color: var(--text);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.app-nav-item {
+  min-height: 46px;
+  padding: 0 14px;
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-weight: 850;
+}
+
+.app-nav-item:hover,
+.app-nav-item.active {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--line);
+}
+
+.app-user {
+  display: grid;
+  gap: 12px;
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.app-main {
+  min-width: 0;
+  padding: clamp(20px, 4vw, 42px);
+}
+
+.app-view {
+  display: none;
+}
+
+.app-view.active {
+  display: grid;
+  gap: 24px;
+}
+
+.app-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.app-heading h2 {
+  max-width: none;
+  font-size: clamp(2.2rem, 4vw, 4.5rem);
+}
+
+.app-heading > p {
+  max-width: 420px;
+  margin: 0;
+  color: var(--muted);
+}
+
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.metric-card,
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(23, 26, 35, 0.86);
+  box-shadow: var(--shadow);
+}
+
+.metric-card {
+  display: grid;
+  gap: 16px;
+  min-height: 144px;
+  padding: 22px;
+}
+
+.metric-card span,
+.panel-header span,
+.song-row small,
+.artist-list-item small,
+.release-item span,
+.social-grid span {
+  color: var(--muted);
+}
+
+.metric-card strong {
+  color: var(--lime);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1;
+}
+
+.dashboard-grid,
+.calendar-layout,
+.artists-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 0.8fr);
+  gap: 16px;
+}
+
+.artists-workspace {
+  grid-template-columns: minmax(260px, 0.34fr) minmax(0, 1fr);
+}
+
+.panel {
+  min-width: 0;
+  padding: 22px;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.panel-header h3 {
+  margin: 0;
+}
+
+.song-list,
+.release-list,
+.artist-list {
+  display: grid;
+  gap: 10px;
+}
+
+.song-row,
+.artist-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 62px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.song-row:hover,
+.song-row.active,
+.artist-list-item:hover,
+.artist-list-item.active {
+  border-color: rgba(0, 229, 255, 0.52);
+  background: rgba(0, 229, 255, 0.08);
+}
+
+.song-row span,
+.artist-list-item span:not(.avatar) {
+  display: grid;
+  gap: 4px;
+}
+
+.avatar {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  color: #061015;
+  background: linear-gradient(135deg, var(--cyan), var(--lime));
+  border-radius: 8px;
+  font-weight: 950;
+}
+
+.avatar.large {
+  width: 74px;
+  height: 74px;
+  font-size: 1.3rem;
+}
+
+.artist-profile {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.artist-profile p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.social-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.social-grid span {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.social-grid strong {
+  color: var(--text);
+}
+
+.catalog-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(280px, 1fr);
+  gap: 18px;
+}
+
+.stream-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.bar-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 84px;
+  gap: 10px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.bar-track {
+  height: 12px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--cyan), var(--pink));
+  border-radius: inherit;
+}
+
+.compact-form,
+.profile-form {
+  display: grid;
+  gap: 12px;
+}
+
+.add-song-form {
+  margin-top: 20px;
+}
+
+.compact-form input,
+.compact-form select,
+.profile-form input,
+.profile-form select {
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+}
+
+.profile-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.profile-form label {
+  display: grid;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 800;
+}
+
+.profile-form button,
+.profile-form .login-message {
+  grid-column: 1 / -1;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.calendar-toolbar h3 {
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-weekday {
+  padding: 8px 4px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.calendar-empty,
+.calendar-day {
+  min-height: 92px;
+}
+
+.calendar-day {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.calendar-day:hover {
+  border-color: var(--cyan);
+}
+
+.calendar-day span {
+  display: block;
+  padding: 4px 6px;
+  color: #061015;
+  background: var(--lime);
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.release-item {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
 @media (max-width: 900px) {
   .hero,
-  .portal {
+  .portal,
+  .app-shell,
+  .dashboard-grid,
+  .calendar-layout,
+  .artists-workspace,
+  .catalog-layout {
     grid-template-columns: 1fr;
+  }
+
+  .app-sidebar {
+    position: static;
+    height: auto;
   }
 
   .hero-media {
@@ -510,7 +919,10 @@ h3 {
   }
 
   .identity-grid,
-  .artist-grid {
+  .artist-grid,
+  .metric-grid,
+  .social-grid,
+  .profile-form {
     grid-template-columns: 1fr;
   }
 }
@@ -536,8 +948,27 @@ h3 {
   }
 
   .site-footer,
-  .login-row {
+  .login-row,
+  .app-heading,
+  .artist-profile {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .calendar-grid {
+    gap: 5px;
+  }
+
+  .calendar-day {
+    min-height: 78px;
+    padding: 8px;
+  }
+
+  .bar-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .bar-row strong {
+    grid-column: 2;
   }
 }
