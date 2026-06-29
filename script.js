@@ -17,106 +17,13 @@ const releaseArtistSelect = document.querySelector("#releaseArtistSelect");
 const appState = {
   session: null,
   selectedView: "dashboard",
-  selectedArtistId: "lia-vector",
-  selectedSongId: "neon-heart",
+  selectedArtistId: null,
+  selectedSongId: null,
   calendarDate: new Date(),
-  artists: [
-    {
-      id: "lia-vector",
-      name: "Lia Vector",
-      genre: "Pop futurista",
-      avatar: "LV",
-      bio: "Vocalista virtual com estética cyber, refrões luminosos e narrativa de cidade noturna.",
-      socials: {
-        instagram: "@liavector.ai",
-        tiktok: "@liavector",
-        youtube: "Lia Vector"
-      },
-      songs: [
-        {
-          id: "neon-heart",
-          title: "Neon Heart",
-          distributor: "Aurora Distro",
-          releaseDate: "2026-07-18",
-          streams: [12000, 18000, 24000, 33000, 47000, 62000]
-        },
-        {
-          id: "synthetic-love",
-          title: "Synthetic Love",
-          distributor: "Aurora Distro",
-          releaseDate: "2026-05-02",
-          streams: [9000, 14000, 21000, 26000, 31000, 39000]
-        }
-      ]
-    },
-    {
-      id: "nox-vale",
-      name: "Nox Vale",
-      genre: "Trap digital",
-      avatar: "NV",
-      bio: "Artista virtual de atmosfera escura, rimas fragmentadas e capítulos semanais.",
-      socials: {
-        instagram: "@noxvale",
-        tiktok: "@noxverse",
-        youtube: "Nox Vale"
-      },
-      songs: [
-        {
-          id: "black-cache",
-          title: "Black Cache",
-          distributor: "Midnight Flow",
-          releaseDate: "2026-04-12",
-          streams: [22000, 28000, 36000, 46000, 54000, 71000]
-        }
-      ]
-    },
-    {
-      id: "mika-pulse",
-      name: "Mika Pulse",
-      genre: "Dance urbano",
-      avatar: "MP",
-      bio: "Performer digital para faixas dançantes, clipes curtos e campanhas de comunidade.",
-      socials: {
-        instagram: "@mikapulse",
-        tiktok: "@pulse.mika",
-        youtube: "Mika Pulse"
-      },
-      songs: [
-        {
-          id: "afterglow-step",
-          title: "Afterglow Step",
-          distributor: "Clubline",
-          releaseDate: "2026-06-21",
-          streams: [15000, 19000, 25000, 37000, 49000, 58000]
-        }
-      ]
-    }
-  ],
-  releases: [
-    {
-      id: "release-1",
-      date: "2026-07-05",
-      title: "Pixel Rain",
-      artistId: "lia-vector",
-      distributor: "Aurora Distro"
-    },
-    {
-      id: "release-2",
-      date: "2026-07-19",
-      title: "Ghost Mode",
-      artistId: "nox-vale",
-      distributor: "Midnight Flow"
-    },
-    {
-      id: "release-3",
-      date: "2026-08-02",
-      title: "City BPM",
-      artistId: "mika-pulse",
-      distributor: "Clubline"
-    }
-  ],
+  artists: [],
+  releases: [],
   profile: {
-    name: "Flex Music Admin",
+    name: "",
     email: "",
     phone: "",
     country: "Brasil",
@@ -145,12 +52,16 @@ const supabaseClient = window.supabase.createClient(
 );
 
 function formatNumber(value) {
-  return new Intl.NumberFormat("pt-BR").format(value);
+  return new Intl.NumberFormat("pt-BR").format(value || 0);
 }
 
 function formatDate(dateString) {
   const date = new Date(`${dateString}T12:00:00`);
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+}
+
+function getUserId() {
+  return appState.session?.user?.id;
 }
 
 function getArtist(artistId) {
@@ -168,15 +79,17 @@ function getAllSongs() {
 }
 
 function getSongTotal(song) {
-  return song.streams.reduce((total, value) => total + value, 0);
+  return song.streams.reduce((total, item) => total + item.streams, 0);
 }
 
-function createId(prefix) {
-  if (crypto.randomUUID) {
-    return crypto.randomUUID();
-  }
-
-  return `${prefix}-${Date.now()}-${Math.round(Math.random() * 10000)}`;
+function getInitials(name) {
+  return String(name || "FM")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 }
 
 function setLoading(isLoading) {
@@ -194,7 +107,114 @@ function getCredentials() {
   };
 }
 
-function renderSession(session) {
+async function loadAppData() {
+  const userId = getUserId();
+  if (!userId) return;
+
+  const [
+    profileResult,
+    artistsResult,
+    songsResult,
+    streamsResult,
+    releasesResult
+  ] = await Promise.all([
+    supabaseClient.from("profiles").select("*").eq("id", userId).maybeSingle(),
+    supabaseClient.from("artists").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("songs").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("song_streams").select("*").order("month", { ascending: true }),
+    supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
+  ]);
+
+  const firstError = [
+    profileResult.error,
+    artistsResult.error,
+    songsResult.error,
+    streamsResult.error,
+    releasesResult.error
+  ].find(Boolean);
+
+  if (firstError) {
+    setMessage(loginMessage, firstError.message, "error");
+    return;
+  }
+
+  if (!profileResult.data) {
+    await supabaseClient.from("profiles").upsert({
+      id: userId,
+      name: appState.session.user.email?.split("@")[0] || "Flex Music Admin",
+      country: "Brasil",
+      currency: "BRL"
+    });
+  }
+
+  const profile = profileResult.data || {};
+  const songsByArtist = new Map();
+  const streamsBySong = new Map();
+
+  streamsResult.data.forEach((stream) => {
+    const list = streamsBySong.get(stream.song_id) || [];
+    list.push({
+      id: stream.id,
+      month: stream.month,
+      streams: Number(stream.streams || 0)
+    });
+    streamsBySong.set(stream.song_id, list);
+  });
+
+  songsResult.data.forEach((song) => {
+    const list = songsByArtist.get(song.artist_id) || [];
+    list.push({
+      id: song.id,
+      title: song.title,
+      distributor: song.distributor || "",
+      releaseDate: song.release_date,
+      streams: streamsBySong.get(song.id) || []
+    });
+    songsByArtist.set(song.artist_id, list);
+  });
+
+  appState.profile = {
+    name: profile.name || "",
+    email: appState.session.user.email || "",
+    phone: profile.phone || "",
+    country: profile.country || "Brasil",
+    currency: profile.currency || "BRL"
+  };
+
+  appState.artists = artistsResult.data.map((artist) => ({
+    id: artist.id,
+    name: artist.name,
+    genre: artist.genre || "",
+    avatar: artist.avatar || getInitials(artist.name),
+    bio: artist.bio || "",
+    socials: {
+      instagram: artist.instagram || "",
+      tiktok: artist.tiktok || "",
+      youtube: artist.youtube || ""
+    },
+    songs: songsByArtist.get(artist.id) || []
+  }));
+
+  appState.releases = releasesResult.data.map((release) => ({
+    id: release.id,
+    date: release.release_date,
+    title: release.title,
+    artistId: release.artist_id,
+    distributor: release.distributor || "",
+    status: release.status
+  }));
+
+  if (!appState.selectedArtistId && appState.artists[0]) {
+    appState.selectedArtistId = appState.artists[0].id;
+  }
+
+  const selectedArtist = getArtist(appState.selectedArtistId);
+  if (selectedArtist && !selectedArtist.songs.some((song) => song.id === appState.selectedSongId)) {
+    appState.selectedSongId = selectedArtist.songs[0]?.id || null;
+  }
+}
+
+async function renderSession(session) {
   const userEmail = session?.user?.email || "";
   const isLoggedIn = Boolean(userEmail);
 
@@ -210,6 +230,7 @@ function renderSession(session) {
 
   if (isLoggedIn) {
     setMessage(loginMessage, "");
+    await loadAppData();
     renderApp();
   }
 }
@@ -281,59 +302,76 @@ function renderDashboard() {
   document.querySelector("#metricStreams").textContent = formatNumber(totalStreams);
 
   const topSongs = document.querySelector("#topSongs");
-  topSongs.innerHTML = songs
-    .sort((a, b) => getSongTotal(b) - getSongTotal(a))
-    .slice(0, 5)
-    .map((song) => `
-      <button class="song-row" type="button" data-view-song="${song.artistId}:${song.id}">
-        <span>
-          <strong>${song.title}</strong>
-          <small>${song.artistName}</small>
-        </span>
-        <b>${formatNumber(getSongTotal(song))}</b>
-      </button>
-    `)
-    .join("");
+  topSongs.innerHTML = songs.length
+    ? songs
+        .sort((a, b) => getSongTotal(b) - getSongTotal(a))
+        .slice(0, 5)
+        .map((song) => `
+          <button class="song-row" type="button" data-view-song="${song.artistId}:${song.id}">
+            <span>
+              <strong>${song.title}</strong>
+              <small>${song.artistName}</small>
+            </span>
+            <b>${formatNumber(getSongTotal(song))}</b>
+          </button>
+        `)
+        .join("")
+    : "<p class='empty-state'>Cadastre artistas e músicas para ver o ranking.</p>";
 
-  document.querySelector("#dashboardReleases").innerHTML = renderReleaseItems(appState.releases.slice(0, 4));
+  document.querySelector("#dashboardReleases").innerHTML = appState.releases.length
+    ? renderReleaseItems(appState.releases.slice(0, 4))
+    : "<p class='empty-state'>Nenhum lançamento agendado ainda.</p>";
 }
 
 function renderArtists() {
   const artistList = document.querySelector("#artistList");
   const artistCountLabel = document.querySelector("#artistCountLabel");
-  const selectedArtist = getArtist(appState.selectedArtistId) || appState.artists[0];
-  const selectedSong = selectedArtist.songs.find((song) => song.id === appState.selectedSongId) || selectedArtist.songs[0];
+  const detail = document.querySelector("#artistDetail");
 
-  appState.selectedArtistId = selectedArtist.id;
-  appState.selectedSongId = selectedSong?.id;
   artistCountLabel.textContent = `${appState.artists.length} artistas`;
 
-  artistList.innerHTML = appState.artists
-    .map((artist) => `
-      <button class="artist-list-item ${artist.id === selectedArtist.id ? "active" : ""}" type="button" data-artist-id="${artist.id}">
-        <span class="avatar">${artist.avatar}</span>
-        <span>
-          <strong>${artist.name}</strong>
-          <small>${artist.genre}</small>
-        </span>
-      </button>
-    `)
-    .join("");
+  artistList.innerHTML = appState.artists.length
+    ? appState.artists
+        .map((artist) => `
+          <button class="artist-list-item ${artist.id === appState.selectedArtistId ? "active" : ""}" type="button" data-artist-id="${artist.id}">
+            <span class="avatar">${artist.avatar}</span>
+            <span>
+              <strong>${artist.name}</strong>
+              <small>${artist.genre || "Sem gênero definido"}</small>
+            </span>
+          </button>
+        `)
+        .join("")
+    : "<p class='empty-state'>Nenhum artista cadastrado. Crie o primeiro abaixo.</p>";
 
-  document.querySelector("#artistDetail").innerHTML = `
+  const selectedArtist = getArtist(appState.selectedArtistId);
+  if (!selectedArtist) {
+    detail.innerHTML = `
+      <div class="empty-panel">
+        <h3>Crie seu primeiro artista virtual</h3>
+        <p>Depois disso você poderá cadastrar músicas, redes sociais, streams e lançamentos.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const selectedSong = selectedArtist.songs.find((song) => song.id === appState.selectedSongId) || selectedArtist.songs[0];
+  appState.selectedSongId = selectedSong?.id || null;
+
+  detail.innerHTML = `
     <div class="artist-profile">
       <span class="avatar large">${selectedArtist.avatar}</span>
       <div>
-        <p class="artist-tag">${selectedArtist.genre}</p>
+        <p class="artist-tag">${selectedArtist.genre || "Artista virtual"}</p>
         <h3>${selectedArtist.name}</h3>
-        <p>${selectedArtist.bio}</p>
+        <p>${selectedArtist.bio || "Sem bio cadastrada ainda."}</p>
       </div>
     </div>
 
     <div class="social-grid">
-      <span>Instagram <strong>${selectedArtist.socials.instagram}</strong></span>
-      <span>TikTok <strong>${selectedArtist.socials.tiktok}</strong></span>
-      <span>YouTube <strong>${selectedArtist.socials.youtube}</strong></span>
+      <span>Instagram <strong>${selectedArtist.socials.instagram || "Não informado"}</strong></span>
+      <span>TikTok <strong>${selectedArtist.socials.tiktok || "Não informado"}</strong></span>
+      <span>YouTube <strong>${selectedArtist.socials.youtube || "Não informado"}</strong></span>
     </div>
 
     <div class="catalog-layout">
@@ -343,20 +381,20 @@ function renderArtists() {
           <span>${selectedArtist.songs.length} músicas</span>
         </div>
         <div class="song-list">
-          ${selectedArtist.songs.map((song) => `
+          ${selectedArtist.songs.length ? selectedArtist.songs.map((song) => `
             <button class="song-row ${song.id === selectedSong?.id ? "active" : ""}" type="button" data-song-id="${song.id}">
               <span>
                 <strong>${song.title}</strong>
-                <small>${formatDate(song.releaseDate)} • ${song.distributor}</small>
+                <small>${song.releaseDate ? formatDate(song.releaseDate) : "Sem data"} • ${song.distributor || "Sem distribuidora"}</small>
               </span>
               <b>${formatNumber(getSongTotal(song))}</b>
             </button>
-          `).join("")}
+          `).join("") : "<p class='empty-state'>Nenhuma música cadastrada para este artista.</p>"}
         </div>
       </div>
 
       <div class="song-insights">
-        ${selectedSong ? renderSongInsights(selectedSong) : "<p>Nenhuma música cadastrada.</p>"}
+        ${selectedSong ? renderSongInsights(selectedSong) : "<p class='empty-state'>Selecione ou cadastre uma música para ver streams mês a mês.</p>"}
       </div>
     </div>
 
@@ -370,8 +408,8 @@ function renderArtists() {
 }
 
 function renderSongInsights(song) {
-  const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"];
-  const maxStreams = Math.max(...song.streams, 1);
+  const streams = song.streams.length ? song.streams : [];
+  const maxStreams = Math.max(...streams.map((item) => item.streams), 1);
 
   return `
     <div class="panel-header">
@@ -379,15 +417,18 @@ function renderSongInsights(song) {
       <span>${formatNumber(getSongTotal(song))} streams</span>
     </div>
     <div class="stream-chart">
-      ${song.streams.map((value, index) => `
-        <div class="bar-row">
-          <span>${months[index]}</span>
-          <div class="bar-track">
-            <div class="bar-fill" style="width: ${(value / maxStreams) * 100}%"></div>
+      ${streams.length ? streams.map((item) => {
+        const monthLabel = new Intl.DateTimeFormat("pt-BR", { month: "short", year: "2-digit" }).format(new Date(`${item.month}T12:00:00`));
+        return `
+          <div class="bar-row">
+            <span>${monthLabel}</span>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${(item.streams / maxStreams) * 100}%"></div>
+            </div>
+            <strong>${formatNumber(item.streams)}</strong>
           </div>
-          <strong>${formatNumber(value)}</strong>
-        </div>
-      `).join("")}
+        `;
+      }).join("") : "<p class='empty-state'>Sem streams registrados para esta música.</p>"}
     </div>
   `;
 }
@@ -424,11 +465,14 @@ function renderCalendar() {
     ...days
   ].join("");
 
-  releaseArtistSelect.innerHTML = appState.artists
-    .map((artist) => `<option value="${artist.id}">${artist.name}</option>`)
-    .join("");
+  releaseArtistSelect.innerHTML = appState.artists.length
+    ? appState.artists.map((artist) => `<option value="${artist.id}">${artist.name}</option>`).join("")
+    : "<option value=''>Cadastre um artista primeiro</option>";
+  releaseArtistSelect.disabled = !appState.artists.length;
 
-  document.querySelector("#releaseQueue").innerHTML = renderReleaseItems(appState.releases);
+  document.querySelector("#releaseQueue").innerHTML = appState.releases.length
+    ? renderReleaseItems(appState.releases)
+    : "<p class='empty-state'>Nenhum lançamento na fila.</p>";
 }
 
 function renderReleaseItems(releases) {
@@ -440,7 +484,7 @@ function renderReleaseItems(releases) {
       return `
         <article class="release-item">
           <strong>${release.title}</strong>
-          <span>${formatDate(release.date)} • ${artist?.name || "Artista"} • ${release.distributor}</span>
+          <span>${formatDate(release.date)} • ${artist?.name || "Artista removido"} • ${release.distributor || "Sem distribuidora"}</span>
         </article>
       `;
     })
@@ -454,6 +498,22 @@ function renderProfile() {
   profileForm.elements.phone.value = appState.profile.phone;
   profileForm.elements.country.value = appState.profile.country;
   profileForm.elements.currency.value = appState.profile.currency;
+}
+
+async function createInitialStreamRows(songId) {
+  const userId = getUserId();
+  const today = new Date();
+  const rows = Array.from({ length: 6 }, (_item, index) => {
+    const date = new Date(today.getFullYear(), today.getMonth() - (5 - index), 1);
+    return {
+      owner_id: userId,
+      song_id: songId,
+      month: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-01`,
+      streams: 0
+    };
+  });
+
+  await supabaseClient.from("song_streams").insert(rows);
 }
 
 document.addEventListener("click", (event) => {
@@ -470,7 +530,7 @@ document.addEventListener("click", (event) => {
 
   if (artistButton) {
     appState.selectedArtistId = artistButton.dataset.artistId;
-    appState.selectedSongId = getArtist(appState.selectedArtistId).songs[0]?.id;
+    appState.selectedSongId = getArtist(appState.selectedArtistId).songs[0]?.id || null;
     renderArtists();
   }
 
@@ -503,38 +563,86 @@ document.querySelector("#nextMonth")?.addEventListener("click", () => {
   renderCalendar();
 });
 
-document.addEventListener("submit", (event) => {
+document.addEventListener("submit", async (event) => {
+  if (event.target.id === "artistForm") {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const { data, error } = await supabaseClient
+      .from("artists")
+      .insert({
+        owner_id: getUserId(),
+        name: String(formData.get("name")),
+        genre: String(formData.get("genre") || ""),
+        avatar: getInitials(String(formData.get("name")))
+      })
+      .select()
+      .single();
+
+    if (error) {
+      setMessage(profileMessage, error.message, "error");
+      return;
+    }
+
+    appState.selectedArtistId = data.id;
+    appState.selectedSongId = null;
+    event.target.reset();
+    await loadAppData();
+    renderApp();
+  }
+
   if (event.target.id === "songForm") {
     event.preventDefault();
     const formData = new FormData(event.target);
-    const artist = getArtist(appState.selectedArtistId);
-    const newSong = {
-      id: createId("song"),
-      title: String(formData.get("title")),
-      releaseDate: String(formData.get("releaseDate")),
-      distributor: String(formData.get("distributor")),
-      streams: [0, 0, 0, 0, 0, 0]
-    };
+    const { data, error } = await supabaseClient
+      .from("songs")
+      .insert({
+        owner_id: getUserId(),
+        artist_id: appState.selectedArtistId,
+        title: String(formData.get("title")),
+        release_date: String(formData.get("releaseDate")),
+        distributor: String(formData.get("distributor"))
+      })
+      .select()
+      .single();
 
-    artist.songs.push(newSong);
-    appState.selectedSongId = newSong.id;
+    if (error) {
+      setMessage(profileMessage, error.message, "error");
+      return;
+    }
+
+    await createInitialStreamRows(data.id);
+    appState.selectedSongId = data.id;
     event.target.reset();
+    await loadAppData();
     renderApp();
   }
 });
 
 if (releaseForm) {
-  releaseForm.addEventListener("submit", (event) => {
+  releaseForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(releaseForm);
-    appState.releases.push({
-      id: createId("release"),
-      date: String(formData.get("date")),
+    const artistId = String(formData.get("artistId") || "");
+    if (!artistId) {
+      setMessage(profileMessage, "Cadastre um artista antes de agendar lançamentos.", "error");
+      return;
+    }
+
+    const { error } = await supabaseClient.from("releases").insert({
+      owner_id: getUserId(),
+      release_date: String(formData.get("date")),
       title: String(formData.get("title")),
-      artistId: String(formData.get("artistId")),
+      artist_id: artistId,
       distributor: String(formData.get("distributor"))
     });
+
+    if (error) {
+      setMessage(profileMessage, error.message, "error");
+      return;
+    }
+
     releaseForm.reset();
+    await loadAppData();
     renderApp();
   });
 }
@@ -545,23 +653,40 @@ if (profileForm) {
     const formData = new FormData(profileForm);
     const newPassword = String(formData.get("newPassword") || "");
 
-    appState.profile = {
+    const profilePayload = {
+      id: getUserId(),
       name: String(formData.get("name") || ""),
-      email: String(formData.get("email") || ""),
       phone: String(formData.get("phone") || ""),
       country: String(formData.get("country") || ""),
       currency: String(formData.get("currency") || "BRL")
     };
 
+    const { error } = await supabaseClient.from("profiles").upsert(profilePayload);
+    if (error) {
+      setMessage(profileMessage, error.message, "error");
+      return;
+    }
+
+    const email = String(formData.get("email") || "");
+    if (email && email !== appState.session.user.email) {
+      const { error: emailError } = await supabaseClient.auth.updateUser({ email });
+      if (emailError) {
+        setMessage(profileMessage, emailError.message, "error");
+        return;
+      }
+    }
+
     if (newPassword) {
-      const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-      if (error) {
-        setMessage(profileMessage, error.message, "error");
+      const { error: passwordError } = await supabaseClient.auth.updateUser({ password: newPassword });
+      if (passwordError) {
+        setMessage(profileMessage, passwordError.message, "error");
         return;
       }
     }
 
     profileForm.elements.newPassword.value = "";
+    await loadAppData();
+    renderProfile();
     setMessage(profileMessage, "Perfil salvo com sucesso.", "success");
   });
 }
