@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Flex</title>
+    <meta
+      name="description"
+      content="Site básico da Flex, pronto para publicação no GitHub Pages."
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="#inicio" aria-label="Flex - início">
+        <span class="brand-mark">F</span>
+        <span>Flex</span>
+      </a>
+
+      <nav class="nav" aria-label="Navegação principal">
+        <a href="#sobre">Sobre</a>
+        <a href="#servicos">Serviços</a>
+        <a href="#contato">Contato</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" id="inicio">
+        <div class="hero-content">
+          <p class="eyebrow">Site oficial</p>
+          <h1>Uma presença simples, clara e pronta para crescer.</h1>
+          <p>
+            Este é um ponto de partida para a Flex: acessível de qualquer
+            dispositivo, fácil de atualizar e pronto para ser hospedado no
+            GitHub Pages.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#contato">Falar conosco</a>
+            <a class="button secondary" href="#servicos">Ver serviços</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="sobre">
+        <div class="section-copy">
+          <p class="eyebrow">Sobre</p>
+          <h2>Feito para ser prático.</h2>
+          <p>
+            O site usa arquivos estáticos, então podemos editar textos, cores,
+            imagens e seções diretamente nesta pasta. Depois, basta enviar as
+            alterações para o GitHub para atualizar a versão publicada.
+          </p>
+        </div>
+      </section>
+
+      <section class="section services" id="servicos">
+        <div class="section-copy">
+          <p class="eyebrow">Serviços</p>
+          <h2>O que podemos mostrar aqui</h2>
+        </div>
+
+        <div class="service-grid">
+          <article class="service-card">
+            <h3>Apresentação</h3>
+            <p>Resumo do negócio, proposta de valor e diferenciais.</p>
+          </article>
+          <article class="service-card">
+            <h3>Portfólio</h3>
+            <p>Projetos, fotos, cases, depoimentos ou trabalhos recentes.</p>
+          </article>
+          <article class="service-card">
+            <h3>Contato</h3>
+            <p>Links para WhatsApp, e-mail, endereço e redes sociais.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section contact" id="contato">
+        <div class="section-copy">
+          <p class="eyebrow">Contato</p>
+          <h2>Vamos conversar?</h2>
+          <p>
+            Troque este texto pelos canais oficiais da Flex. Podemos adicionar
+            formulário, mapa, WhatsApp, Instagram ou qualquer outro link.
+          </p>
+        </div>
+
+        <div class="contact-actions">
+          <a class="button primary" href="mailto:contato@flex.com">Enviar e-mail</a>
+          <a class="button secondary" href="https://github.com/" target="_blank" rel="noreferrer">
+            Ver GitHub
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Flex</span>
+      <span id="year"></span>
+    </footer>
+
+    <script src="script.js"></script>
+  </body>
+</html>
