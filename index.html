@@ -3,99 +3,168 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Flex</title>
+    <title>Flex Music</title>
     <meta
       name="description"
-      content="Site básico da Flex, pronto para publicação no GitHub Pages."
+      content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="#inicio" aria-label="Flex - início">
-        <span class="brand-mark">F</span>
-        <span>Flex</span>
+      <a class="brand" href="#inicio" aria-label="Flex Music - início">
+        <span class="brand-mark" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+        <span class="brand-name">Flex Music</span>
       </a>
 
       <nav class="nav" aria-label="Navegação principal">
-        <a href="#sobre">Sobre</a>
-        <a href="#servicos">Serviços</a>
-        <a href="#contato">Contato</a>
+        <a href="#artistas">Artistas</a>
+        <a href="#label">Label</a>
+        <a href="#portal">Login</a>
       </nav>
     </header>
 
     <main>
       <section class="hero" id="inicio">
+        <div class="hero-media" aria-hidden="true">
+          <div class="soundwave">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+
         <div class="hero-content">
-          <p class="eyebrow">Site oficial</p>
-          <h1>Uma presença simples, clara e pronta para crescer.</h1>
+          <p class="eyebrow">Gravadora virtual</p>
+          <h1>Artistas digitais. Música real.</h1>
           <p>
-            Este é um ponto de partida para a Flex: acessível de qualquer
-            dispositivo, fácil de atualizar e pronto para ser hospedado no
-            GitHub Pages.
+            A Flex Music cria, lança e desenvolve artistas virtuais com
+            identidade própria, narrativa visual e presença nas plataformas.
           </p>
           <div class="hero-actions">
-            <a class="button primary" href="#contato">Falar conosco</a>
-            <a class="button secondary" href="#servicos">Ver serviços</a>
+            <a class="button primary" href="#artistas">Conhecer roster</a>
+            <a class="button secondary" href="#portal">Entrar no portal</a>
           </div>
         </div>
       </section>
 
-      <section class="section" id="sobre">
+      <section class="section intro" id="label">
         <div class="section-copy">
-          <p class="eyebrow">Sobre</p>
-          <h2>Feito para ser prático.</h2>
-          <p>
-            O site usa arquivos estáticos, então podemos editar textos, cores,
-            imagens e seções diretamente nesta pasta. Depois, basta enviar as
-            alterações para o GitHub para atualizar a versão publicada.
-          </p>
-        </div>
-      </section>
-
-      <section class="section services" id="servicos">
-        <div class="section-copy">
-          <p class="eyebrow">Serviços</p>
-          <h2>O que podemos mostrar aqui</h2>
+          <p class="eyebrow">Identidade</p>
+          <h2>Uma label feita para personagens que viram fenômeno.</h2>
         </div>
 
-        <div class="service-grid">
-          <article class="service-card">
-            <h3>Apresentação</h3>
-            <p>Resumo do negócio, proposta de valor e diferenciais.</p>
+        <div class="identity-grid">
+          <article>
+            <span class="identity-number">01</span>
+            <h3>Som</h3>
+            <p>Direção musical, singles, feats e campanhas de lançamento.</p>
           </article>
-          <article class="service-card">
-            <h3>Portfólio</h3>
-            <p>Projetos, fotos, cases, depoimentos ou trabalhos recentes.</p>
+          <article>
+            <span class="identity-number">02</span>
+            <h3>Imagem</h3>
+            <p>Visual de artista, capas, teasers, paleta e estética de era.</p>
           </article>
-          <article class="service-card">
-            <h3>Contato</h3>
-            <p>Links para WhatsApp, e-mail, endereço e redes sociais.</p>
+          <article>
+            <span class="identity-number">03</span>
+            <h3>Universo</h3>
+            <p>História, persona, comunidade e presença social contínua.</p>
           </article>
         </div>
       </section>
 
-      <section class="section contact" id="contato">
+      <section class="section artists" id="artistas">
         <div class="section-copy">
-          <p class="eyebrow">Contato</p>
-          <h2>Vamos conversar?</h2>
+          <p class="eyebrow">Roster</p>
+          <h2>Primeiros artistas virtuais</h2>
+        </div>
+
+        <div class="artist-grid">
+          <article class="artist-card neon">
+            <div class="artist-portrait" aria-hidden="true"></div>
+            <div>
+              <p class="artist-tag">Pop futurista</p>
+              <h3>Lia Vector</h3>
+              <p>Vocais cristalinos, estética cyber e refrões de arena.</p>
+            </div>
+          </article>
+
+          <article class="artist-card violet">
+            <div class="artist-portrait" aria-hidden="true"></div>
+            <div>
+              <p class="artist-tag">Trap digital</p>
+              <h3>Nox Vale</h3>
+              <p>Batidas pesadas, visual noturno e storytelling serial.</p>
+            </div>
+          </article>
+
+          <article class="artist-card amber">
+            <div class="artist-portrait" aria-hidden="true"></div>
+            <div>
+              <p class="artist-tag">Dance urbano</p>
+              <h3>Mika Pulse</h3>
+              <p>Clipes vibrantes, coreografias curtas e energia de festival.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section portal" id="portal">
+        <div class="portal-copy">
+          <p class="eyebrow">Portal</p>
+          <h2>Login Flex Music</h2>
           <p>
-            Troque este texto pelos canais oficiais da Flex. Podemos adicionar
-            formulário, mapa, WhatsApp, Instagram ou qualquer outro link.
+            Área reservada para equipe, artistas, produtores e parceiros da
+            gravadora. Nesta primeira versão o painel é visual; depois podemos
+            conectar autenticação real, dashboard e arquivos internos.
           </p>
         </div>
 
-        <div class="contact-actions">
-          <a class="button primary" href="mailto:contato@flex.com">Enviar e-mail</a>
-          <a class="button secondary" href="https://github.com/" target="_blank" rel="noreferrer">
-            Ver GitHub
-          </a>
-        </div>
+        <form class="login-card" id="loginForm">
+          <div class="login-header">
+            <span class="login-mark">FM</span>
+            <div>
+              <h3>Entrar</h3>
+              <p>Acesso ao backstage</p>
+            </div>
+          </div>
+
+          <label>
+            E-mail
+            <input type="email" name="email" autocomplete="email" placeholder="voce@flexmusic.com">
+          </label>
+
+          <label>
+            Senha
+            <input type="password" name="password" autocomplete="current-password" placeholder="Sua senha">
+          </label>
+
+          <div class="login-row">
+            <label class="check">
+              <input type="checkbox" name="remember">
+              <span>Lembrar acesso</span>
+            </label>
+            <a href="mailto:contato@flexmusic.com">Suporte</a>
+          </div>
+
+          <button class="button primary" type="submit">Acessar portal</button>
+          <p class="login-message" id="loginMessage" role="status" aria-live="polite"></p>
+        </form>
       </section>
     </main>
 
     <footer class="site-footer">
-      <span>Flex</span>
+      <span>Flex Music</span>
+      <span>Virtual artists label</span>
       <span id="year"></span>
     </footer>
 
