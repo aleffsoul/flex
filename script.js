@@ -387,10 +387,10 @@ async function loadAppData() {
     releasesResult
   ] = await Promise.all([
     supabaseClient.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabaseClient.from("artists").select("*").eq("owner_id", userId).order("created_at", { ascending: true }),
-    supabaseClient.from("songs").select("*").eq("owner_id", userId).order("created_at", { ascending: true }),
-    supabaseClient.from("song_streams").select("*").eq("owner_id", userId).order("month", { ascending: true }),
-    supabaseClient.from("releases").select("*").eq("owner_id", userId).order("release_date", { ascending: true })
+    supabaseClient.from("artists").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("songs").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("song_streams").select("*").order("month", { ascending: true }),
+    supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
   ]);
 
   const loadError = [
