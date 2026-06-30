@@ -17,6 +17,24 @@ const appSearch = document.querySelector("#appSearch");
 const artistSearch = document.querySelector("#artistSearch");
 const artistGenreFilter = document.querySelector("#artistGenreFilter");
 const newArtistButton = document.querySelector("#newArtistButton");
+const artistCatalogView = document.querySelector("#artistCatalogView");
+const songCatalogSearch = document.querySelector("#songCatalogSearch");
+const songStatusFilter = document.querySelector("#songStatusFilter");
+const songStatusGrid = document.querySelector("#songStatusGrid");
+const catalogSongList = document.querySelector("#catalogSongList");
+const songCountLabel = document.querySelector("#songCountLabel");
+const catalogSubtitle = document.querySelector("#catalogSubtitle");
+const newSongButton = document.querySelector("#newSongButton");
+const batchSongButton = document.querySelector("#batchSongButton");
+const catalogBackButton = document.querySelector("#catalogBackButton");
+
+const songStatuses = [
+  { value: "rascunho", label: "Rascunho" },
+  { value: "pronta", label: "Pronta" },
+  { value: "em_analise", label: "Em análise" },
+  { value: "agendada", label: "Agendada" },
+  { value: "publicada", label: "Publicada" }
+];
 
 const appState = {
   session: null,
@@ -34,7 +52,10 @@ const appState = {
     currency: "BRL"
   },
   artistSearch: "",
-  artistGenre: ""
+  artistGenre: "",
+  artistMode: "list",
+  songCatalogSearch: "",
+  songStatus: ""
 };
 
 if (year) {
@@ -96,6 +117,23 @@ function getInitials(name) {
     .map((part) => part[0])
     .join("")
     .toUpperCase();
+}
+
+function getSongStatusLabel(status) {
+  return songStatuses.find((item) => item.value === status)?.label || "Rascunho";
+}
+
+function getFilteredCatalogSongs(artist) {
+  const searchTerm = appState.songCatalogSearch.toLowerCase();
+  return artist.songs.filter((song) => {
+    const matchesSearch = !searchTerm ||
+      song.title.toLowerCase().includes(searchTerm) ||
+      song.distributor.toLowerCase().includes(searchTerm) ||
+      song.isrc.toLowerCase().includes(searchTerm) ||
+      song.upc.toLowerCase().includes(searchTerm);
+    const matchesStatus = !appState.songStatus || song.status === appState.songStatus;
+    return matchesSearch && matchesStatus;
+  });
 }
 
 function setLoading(isLoading) {
@@ -174,6 +212,10 @@ async function loadAppData() {
       title: song.title,
       distributor: song.distributor || "",
       releaseDate: song.release_date,
+      status: song.status || "rascunho",
+      isrc: song.isrc || "",
+      upc: song.upc || "",
+      coverUrl: song.cover_url || "",
       streams: streamsBySong.get(song.id) || []
     });
     songsByArtist.set(song.artist_id, list);
@@ -302,6 +344,8 @@ function renderNavigation() {
 }
 
 function focusArtistForm() {
+  appState.artistMode = "list";
+  renderArtists();
   document.querySelector("#artistForm")?.removeAttribute("hidden");
   requestAnimationFrame(() => {
     document.querySelector("#artistForm input[name='name']")?.focus();
@@ -342,6 +386,27 @@ function renderDashboard() {
 function renderArtists() {
   const artistList = document.querySelector("#artistList");
   const artistCountLabel = document.querySelector("#artistCountLabel");
+  const artistHeading = document.querySelector("#artistsView > .artists-heading");
+  const artistFilterBar = document.querySelector("#artistsView > .artist-filter-bar");
+  const artistForm = document.querySelector("#artistForm");
+  const selectedArtist = getArtist(appState.selectedArtistId);
+
+  if (appState.artistMode === "catalog" && selectedArtist) {
+    if (artistHeading) artistHeading.hidden = true;
+    if (artistFilterBar) artistFilterBar.hidden = true;
+    if (artistList) artistList.hidden = true;
+    if (artistForm) artistForm.hidden = true;
+    if (artistCatalogView) artistCatalogView.hidden = false;
+    renderArtistCatalog(selectedArtist);
+    return;
+  }
+
+  appState.artistMode = "list";
+  if (artistHeading) artistHeading.hidden = false;
+  if (artistFilterBar) artistFilterBar.hidden = false;
+  if (artistList) artistList.hidden = false;
+  if (artistCatalogView) artistCatalogView.hidden = true;
+
   const genres = [...new Set(appState.artists.map((artist) => artist.genre).filter(Boolean))].sort();
   const searchTerm = appState.artistSearch.toLowerCase();
   const filteredArtists = appState.artists.filter((artist) => {
@@ -389,6 +454,74 @@ function renderArtists() {
         `)
         .join("")
     : "<div class='empty-panel'><h3>Nenhum artista encontrado</h3><p>Crie um novo artista ou ajuste a busca/filtro.</p></div>";
+}
+
+function renderArtistCatalog(artist) {
+  const filteredSongs = getFilteredCatalogSongs(artist);
+  const counts = songStatuses.reduce((total, status) => {
+    total[status.value] = artist.songs.filter((song) => song.status === status.value).length;
+    return total;
+  }, {});
+
+  if (catalogSubtitle) {
+    catalogSubtitle.textContent = `${artist.name} • ${artist.genre || "Artista virtual"} • ${formatNumber(artist.songs.length)} faixas`;
+  }
+
+  if (songCatalogSearch && songCatalogSearch.value !== appState.songCatalogSearch) {
+    songCatalogSearch.value = appState.songCatalogSearch;
+  }
+
+  if (songStatusFilter && songStatusFilter.value !== appState.songStatus) {
+    songStatusFilter.value = appState.songStatus;
+  }
+
+  if (songStatusGrid) {
+    songStatusGrid.innerHTML = songStatuses
+      .map((status) => `
+        <button class="song-status-card ${appState.songStatus === status.value ? "active" : ""}" type="button" data-song-status="${status.value}">
+          <span>${status.label}</span>
+          <strong>${formatNumber(counts[status.value] || 0)}</strong>
+        </button>
+      `)
+      .join("");
+  }
+
+  if (songCountLabel) {
+    songCountLabel.textContent = `${formatNumber(filteredSongs.length)} faixas`;
+  }
+
+  if (!catalogSongList) return;
+
+  catalogSongList.innerHTML = filteredSongs.length
+    ? filteredSongs
+        .slice()
+        .sort((a, b) => String(b.releaseDate || "").localeCompare(String(a.releaseDate || "")))
+        .map((song) => `
+          <article class="song-table-row">
+            <div class="song-release-cell">
+              ${song.coverUrl
+                ? `<img class="song-cover" src="${song.coverUrl}" alt="Capa de ${song.title}">`
+                : `<span class="song-cover song-cover-placeholder">♪</span>`}
+              <div>
+                <h3>${song.title}</h3>
+                <p>${artist.name} • Single</p>
+                <div class="song-identifiers">
+                  <button class="song-edit-button" type="button" data-song-edit="${song.id}">Editar</button>
+                  <span>ISRC ${song.isrc || "a definir"}</span>
+                  <span>UPC ${song.upc || "a definir"}</span>
+                </div>
+              </div>
+            </div>
+            <span class="status-pill status-${song.status}">${getSongStatusLabel(song.status)}</span>
+            <span class="song-date">${song.releaseDate ? formatDate(song.releaseDate) : "A definir"}</span>
+            <span class="distributor-pill">${song.distributor || "Sem distribuidora"}</span>
+            <button class="streams-link" type="button" data-song-id="${song.id}">
+              ${formatNumber(getSongTotal(song))} streams
+            </button>
+          </article>
+        `)
+        .join("")
+    : "<div class='empty-panel'><h3>Nenhuma música encontrada</h3><p>Adicione uma nova música ou ajuste a busca/filtro.</p></div>";
 }
 
 function renderSongInsights(song) {
@@ -505,11 +638,16 @@ document.addEventListener("click", (event) => {
   const artistButton = event.target.closest("[data-artist-id]");
   const catalogButton = event.target.closest("[data-open-catalog]");
   const songButton = event.target.closest("[data-song-id]");
+  const statusButton = event.target.closest("[data-song-status]");
+  const editSongButton = event.target.closest("[data-song-edit]");
   const dashboardSong = event.target.closest("[data-view-song]");
   const calendarDay = event.target.closest("[data-calendar-date]");
 
   if (navButton) {
     appState.selectedView = navButton.dataset.view;
+    if (navButton.dataset.view === "artists" && !navButton.classList.contains("app-create-button")) {
+      appState.artistMode = "list";
+    }
     renderApp();
     if (navButton.classList.contains("app-create-button")) {
       focusArtistForm();
@@ -525,7 +663,10 @@ document.addEventListener("click", (event) => {
   if (catalogButton) {
     appState.selectedArtistId = catalogButton.dataset.openCatalog;
     appState.selectedSongId = getArtist(appState.selectedArtistId).songs[0]?.id || null;
-    setMessage(profileMessage, "Catálogo detalhado será a próxima etapa desta área.", "success");
+    appState.artistMode = "catalog";
+    appState.songCatalogSearch = "";
+    appState.songStatus = "";
+    renderArtists();
   }
 
   if (songButton) {
@@ -533,11 +674,22 @@ document.addEventListener("click", (event) => {
     renderArtists();
   }
 
+  if (statusButton) {
+    appState.songStatus = appState.songStatus === statusButton.dataset.songStatus ? "" : statusButton.dataset.songStatus;
+    renderArtists();
+  }
+
+  if (editSongButton) {
+    appState.selectedSongId = editSongButton.dataset.songEdit;
+    setMessage(profileMessage, "Edição detalhada da música será ligada na próxima etapa.", "success");
+  }
+
   if (dashboardSong) {
     const [artistId, songId] = dashboardSong.dataset.viewSong.split(":");
     appState.selectedView = "artists";
     appState.selectedArtistId = artistId;
     appState.selectedSongId = songId;
+    appState.artistMode = "catalog";
     renderApp();
   }
 
@@ -565,6 +717,48 @@ if (artistGenreFilter) {
   });
 }
 
+if (catalogBackButton) {
+  catalogBackButton.addEventListener("click", () => {
+    appState.artistMode = "list";
+    appState.songCatalogSearch = "";
+    appState.songStatus = "";
+    renderArtists();
+  });
+}
+
+if (newSongButton) {
+  newSongButton.addEventListener("click", () => {
+    const songForm = document.querySelector("#songForm");
+    if (!songForm) return;
+    songForm.hidden = !songForm.hidden;
+    if (!songForm.hidden) {
+      requestAnimationFrame(() => {
+        songForm.querySelector("input[name='title']")?.focus();
+      });
+    }
+  });
+}
+
+if (batchSongButton) {
+  batchSongButton.addEventListener("click", () => {
+    setMessage(profileMessage, "Importação em lote será a próxima função desta área.", "success");
+  });
+}
+
+if (songCatalogSearch) {
+  songCatalogSearch.addEventListener("input", () => {
+    appState.songCatalogSearch = songCatalogSearch.value.trim();
+    renderArtists();
+  });
+}
+
+if (songStatusFilter) {
+  songStatusFilter.addEventListener("change", () => {
+    appState.songStatus = songStatusFilter.value;
+    renderArtists();
+  });
+}
+
 if (appSearch) {
   appSearch.addEventListener("input", () => {
     const term = appSearch.value.trim().toLowerCase();
@@ -584,6 +778,7 @@ if (appSearch) {
       appState.selectedView = "artists";
       appState.selectedArtistId = song?.artistId || artist.id;
       appState.selectedSongId = song?.id || getArtist(appState.selectedArtistId).songs[0]?.id || null;
+      appState.artistMode = song ? "catalog" : "list";
       renderApp();
     }
   });
@@ -637,7 +832,11 @@ document.addEventListener("submit", async (event) => {
         artist_id: appState.selectedArtistId,
         title: String(formData.get("title")),
         release_date: String(formData.get("releaseDate")),
-        distributor: String(formData.get("distributor"))
+        distributor: String(formData.get("distributor")),
+        status: String(formData.get("status") || "rascunho"),
+        isrc: String(formData.get("isrc") || ""),
+        upc: String(formData.get("upc") || ""),
+        cover_url: String(formData.get("coverUrl") || "")
       })
       .select()
       .single();
@@ -649,7 +848,9 @@ document.addEventListener("submit", async (event) => {
 
     await createInitialStreamRows(data.id);
     appState.selectedSongId = data.id;
+    appState.artistMode = "catalog";
     event.target.reset();
+    event.target.hidden = true;
     await loadAppData();
     renderApp();
   }

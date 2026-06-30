@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=artists-1">
+    <link rel="stylesheet" href="styles.css?v=catalog-1">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -281,6 +281,75 @@
           </form>
 
           <div class="artist-card-grid" id="artistList"></div>
+
+          <section class="artist-catalog-view" id="artistCatalogView" hidden>
+            <div class="catalog-heading">
+              <button class="catalog-back" id="catalogBackButton" type="button">← Voltar para artistas</button>
+              <div class="app-heading artists-heading">
+                <div>
+                  <p class="eyebrow">Catálogo</p>
+                  <h2>Músicas</h2>
+                  <p id="catalogSubtitle">Status, agenda, distribuidora, ISRC/UPC e streams em um só lugar.</p>
+                </div>
+                <div class="catalog-actions">
+                  <button class="button secondary" id="batchSongButton" type="button">Adicionar em lote</button>
+                  <button class="button primary" id="newSongButton" type="button">+ Nova música</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="song-status-grid" id="songStatusGrid"></div>
+
+            <div class="artist-filter-bar song-filter-bar">
+              <label class="artist-search">
+                <span>⌕</span>
+                <input type="search" id="songCatalogSearch" placeholder="Buscar música...">
+              </label>
+              <select id="songStatusFilter">
+                <option value="">Todos os status</option>
+                <option value="rascunho">Rascunho</option>
+                <option value="pronta">Pronta</option>
+                <option value="em_analise">Em análise</option>
+                <option value="agendada">Agendada</option>
+                <option value="publicada">Publicada</option>
+              </select>
+              <span id="songCountLabel">0 faixas</span>
+            </div>
+
+            <form class="compact-form add-song-form song-create-panel" id="songForm" hidden>
+              <div class="panel-header">
+                <h3>Nova música</h3>
+                <span>Cadastro rápido</span>
+              </div>
+              <div class="song-create-grid">
+                <input type="text" name="title" placeholder="Nome da música" required>
+                <input type="date" name="releaseDate" required>
+                <input type="text" name="distributor" placeholder="Distribuidora" required>
+                <select name="status">
+                  <option value="rascunho">Rascunho</option>
+                  <option value="pronta">Pronta</option>
+                  <option value="em_analise">Em análise</option>
+                  <option value="agendada">Agendada</option>
+                  <option value="publicada">Publicada</option>
+                </select>
+                <input type="text" name="isrc" placeholder="ISRC">
+                <input type="text" name="upc" placeholder="UPC">
+                <input type="url" name="coverUrl" placeholder="URL da capa">
+                <button class="button primary" type="submit">Cadastrar música</button>
+              </div>
+            </form>
+
+            <div class="song-table-card">
+              <div class="song-table-head">
+                <span>Lançamento</span>
+                <span>Status</span>
+                <span>Data</span>
+                <span>Distribuidora</span>
+                <span>Streams</span>
+              </div>
+              <div class="song-table-body" id="catalogSongList"></div>
+            </div>
+          </section>
         </section>
 
         <section class="app-view" id="calendarView" data-view-panel="calendar">
@@ -370,7 +439,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=artists-1"></script>
-    <script src="script.js?v=artists-1"></script>
+    <script src="supabase.js?v=catalog-1"></script>
+    <script src="script.js?v=catalog-1"></script>
   </body>
 </html>
