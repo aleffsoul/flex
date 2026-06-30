@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=catalog-4">
+    <link rel="stylesheet" href="styles.css?v=catalog-5">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -389,9 +389,9 @@
                 <div class="song-cover-upload">
                   <span class="field-label">Capa do álbum</span>
                   <div class="file-drop">
-                    <span class="cover-preview" aria-hidden="true">♪</span>
+                    <span class="cover-preview" id="songCoverPreview" aria-hidden="true">♪</span>
                     <label>
-                      <input type="file" name="coverFile" accept="image/*">
+                      <input type="file" name="coverFile" id="songCoverInput" accept="image/*">
                       <small>Use preferencialmente uma capa quadrada.</small>
                     </label>
                   </div>
@@ -579,7 +579,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=catalog-4"></script>
-    <script src="script.js?v=catalog-4"></script>
+    <script src="supabase.js?v=catalog-5"></script>
+    <script src="script.js?v=catalog-5"></script>
   </body>
 </html>

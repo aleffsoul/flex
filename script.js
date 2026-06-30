@@ -34,6 +34,8 @@ const instrumentalToggle = document.querySelector("#instrumentalToggle");
 const lyricsField = document.querySelector("#lyricsField");
 const songFormTitle = document.querySelector("#songFormTitle");
 const songFormEyebrow = document.querySelector("#songFormEyebrow");
+const songCoverInput = document.querySelector("#songCoverInput");
+const songCoverPreview = document.querySelector("#songCoverPreview");
 const closeArtistFormButton = document.querySelector("#closeArtistFormButton");
 const cancelArtistFormButton = document.querySelector("#cancelArtistFormButton");
 const deleteArtistButton = document.querySelector("#deleteArtistButton");
@@ -166,7 +168,7 @@ function readImageFile(file) {
   });
 }
 
-async function uploadArtistPhoto(file) {
+async function uploadImageFile(file, bucketName, fallbackName) {
   if (!file || !file.size) return "";
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const safeName = file.name
@@ -174,11 +176,11 @@ async function uploadArtistPhoto(file) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "")
-    .slice(0, 48) || "artist-photo";
+    .slice(0, 48) || fallbackName;
   const path = `${getUserId()}/${crypto.randomUUID()}-${safeName}.${extension}`;
 
   const { error } = await supabaseClient.storage
-    .from("artist-photos")
+    .from(bucketName)
     .upload(path, file, {
       cacheControl: "3600",
       upsert: false
@@ -186,8 +188,16 @@ async function uploadArtistPhoto(file) {
 
   if (error) throw error;
 
-  const { data } = supabaseClient.storage.from("artist-photos").getPublicUrl(path);
+  const { data } = supabaseClient.storage.from(bucketName).getPublicUrl(path);
   return data.publicUrl || "";
+}
+
+function uploadArtistPhoto(file) {
+  return uploadImageFile(file, "artist-photos", "artist-photo");
+}
+
+function uploadSongCover(file) {
+  return uploadImageFile(file, "song-covers", "song-cover");
 }
 
 function getSong(songId) {
@@ -233,6 +243,9 @@ function openSongForm(song = null) {
     setSelectValue(songForm.elements.aiPlatform, song.aiPlatform || "Não se aplica");
     songForm.elements.isInstrumental.checked = Boolean(song.isInstrumental);
     songForm.elements.lyrics.value = song.lyrics || "";
+    setSongCoverPreview(song.coverUrl);
+  } else {
+    setSongCoverPreview("");
   }
 
   syncLyricsVisibility();
@@ -240,6 +253,21 @@ function openSongForm(song = null) {
   requestAnimationFrame(() => {
     songForm.querySelector("input[name='title']")?.focus();
   });
+}
+
+function setSongCoverPreview(imageUrl) {
+  if (!songCoverPreview) return;
+  songCoverPreview.innerHTML = "";
+  songCoverPreview.classList.toggle("has-image", Boolean(imageUrl));
+
+  if (imageUrl) {
+    const image = document.createElement("img");
+    image.src = imageUrl;
+    image.alt = "Prévia da capa";
+    songCoverPreview.appendChild(image);
+  } else {
+    songCoverPreview.textContent = "♪";
+  }
 }
 
 function closeArtistForm() {
@@ -954,6 +982,20 @@ if (artistPhotoInput) {
   });
 }
 
+if (songCoverInput) {
+  songCoverInput.addEventListener("change", async () => {
+    const file = songCoverInput.files?.[0];
+    if (!file) return;
+
+    try {
+      const imageData = await readImageFile(file);
+      setSongCoverPreview(imageData);
+    } catch (_error) {
+      setMessage(profileMessage, "Não foi possível carregar a capa selecionada.", "error");
+    }
+  });
+}
+
 if (instrumentalToggle) {
   instrumentalToggle.addEventListener("change", syncLyricsVisibility);
 }
@@ -1091,6 +1133,20 @@ document.addEventListener("submit", async (event) => {
     const editingSong = getSong(appState.editingSongId);
     const coverFileName = getFileName(formData, "coverFile") || editingSong?.coverFileName || "";
     const audioFileName = getFileName(formData, "audioFile") || editingSong?.audioFileName || "";
+    const coverFile = formData.get("coverFile");
+    let uploadedCoverUrl = "";
+
+    try {
+      uploadedCoverUrl = await uploadSongCover(coverFile);
+    } catch (error) {
+      try {
+        uploadedCoverUrl = await readImageFile(coverFile);
+      } catch (_fallbackError) {
+        setMessage(profileMessage, error.message || "Não foi possível enviar a capa da música.", "error");
+        return;
+      }
+    }
+
     const payload = {
       owner_id: getUserId(),
       artist_id: artistId,
@@ -1100,7 +1156,7 @@ document.addEventListener("submit", async (event) => {
       status: editingSong?.status || "rascunho",
       isrc: String(formData.get("isrc") || ""),
       upc: String(formData.get("upc") || ""),
-      cover_url: editingSong?.coverUrl || "",
+      cover_url: uploadedCoverUrl || editingSong?.coverUrl || "",
       song_type: String(formData.get("type") || "Single"),
       ai_platform: String(formData.get("aiPlatform") || "Não se aplica"),
       lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),

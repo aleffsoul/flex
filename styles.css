@@ -1838,11 +1838,18 @@ h3 {
   place-items: center;
   width: 72px;
   height: 72px;
+  overflow: hidden;
   color: #82907f;
   background: #eef3ec;
   border-radius: 14px;
   font-size: 1.8rem;
   font-weight: 950;
+}
+
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .file-drop label {
