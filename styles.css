@@ -1459,6 +1459,10 @@ h3 {
   gap: 14px;
 }
 
+.artist-card-head > div {
+  min-width: 0;
+}
+
 .artist-card-head h3 {
   margin: 0 0 2px;
   color: var(--app-ink);
@@ -1485,6 +1489,24 @@ h3 {
   color: #111515;
   background: var(--app-accent);
   font-weight: 950;
+}
+
+.artist-edit-button {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 9px 12px;
+  color: #111515;
+  background: #f4f7f1;
+  border: 1px solid var(--app-line);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.artist-edit-button:hover {
+  background: var(--app-accent-soft);
+  border-color: #b6ec35;
 }
 
 .artist-bio {
@@ -2046,6 +2068,34 @@ h3 {
   font-weight: 950;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+
+.song-audio-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.song-audio-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 0 11px;
+  color: #111515;
+  background: #f4f7f1;
+  border: 1px solid var(--app-line);
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 950;
+  text-decoration: none;
+}
+
+.song-audio-button:hover {
+  background: var(--app-accent-soft);
+  border-color: #b6ec35;
 }
 
 .status-pill,

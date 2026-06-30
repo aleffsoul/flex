@@ -73,7 +73,8 @@ const appState = {
   songCatalogSearch: "",
   songStatus: "",
   editingSongId: null,
-  editingArtistId: null
+  editingArtistId: null,
+  currentAudio: null
 };
 
 if (year) {
@@ -160,6 +161,10 @@ function getFileName(formData, key) {
 }
 
 function readImageFile(file) {
+  return readFileAsDataUrl(file);
+}
+
+function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
@@ -168,7 +173,7 @@ function readImageFile(file) {
   });
 }
 
-async function uploadImageFile(file, bucketName, fallbackName) {
+async function uploadStorageFile(file, bucketName, fallbackName) {
   if (!file || !file.size) return "";
   const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
   const safeName = file.name
@@ -193,11 +198,20 @@ async function uploadImageFile(file, bucketName, fallbackName) {
 }
 
 function uploadArtistPhoto(file) {
-  return uploadImageFile(file, "artist-photos", "artist-photo");
+  return uploadStorageFile(file, "artist-photos", "artist-photo");
 }
 
 function uploadSongCover(file) {
-  return uploadImageFile(file, "song-covers", "song-cover");
+  return uploadStorageFile(file, "song-covers", "song-cover");
+}
+
+function uploadSongAudio(file) {
+  return uploadStorageFile(file, "song-audio", "song-audio");
+}
+
+function getAudioSource(song) {
+  const source = song.audioUrl || song.audioFileName || "";
+  return source.startsWith("http") || source.startsWith("data:") ? source : "";
 }
 
 function getSong(songId) {
@@ -401,6 +415,7 @@ async function loadAppData() {
     const list = songsByArtist.get(song.artist_id) || [];
     list.push({
       id: song.id,
+      artistId: song.artist_id,
       title: song.title,
       distributor: song.distributor || "",
       releaseDate: song.release_date,
@@ -413,6 +428,7 @@ async function loadAppData() {
       lyrics: song.lyrics || "",
       isInstrumental: Boolean(song.is_instrumental),
       coverFileName: song.cover_file_name || "",
+      audioUrl: song.audio_url || "",
       audioFileName: song.audio_file_name || "",
       streams: streamsBySong.get(song.id) || []
     });
@@ -445,14 +461,30 @@ async function loadAppData() {
     songs: songsByArtist.get(artist.id) || []
   }));
 
-  appState.releases = releasesResult.data.map((release) => ({
+  const manualReleases = releasesResult.data.map((release) => ({
     id: release.id,
     date: release.release_date,
     title: release.title,
     artistId: release.artist_id,
     distributor: release.distributor || "",
-    status: release.status
+    status: release.status,
+    source: "manual"
   }));
+
+  const songReleases = songsResult.data
+    .filter((song) => song.release_date)
+    .map((song) => ({
+      id: `song-${song.id}`,
+      songId: song.id,
+      date: song.release_date,
+      title: song.title,
+      artistId: song.artist_id,
+      distributor: song.distributor || "",
+      status: song.status || "rascunho",
+      source: "song"
+    }));
+
+  appState.releases = [...manualReleases, ...songReleases];
 
   if (!appState.selectedArtistId && appState.artists[0]) {
     appState.selectedArtistId = appState.artists[0].id;
@@ -634,6 +666,7 @@ function renderArtists() {
                 <h3>${artist.name}</h3>
                 <p>${artist.genre || "Gênero não informado"}</p>
               </div>
+              <button class="artist-edit-button" type="button" data-edit-artist="${artist.id}">Editar</button>
             </div>
             <p class="artist-bio">${artist.bio || "Sem biografia cadastrada."}</p>
             <div class="artist-stats">
@@ -645,7 +678,6 @@ function renderArtists() {
             <div class="artist-card-footer">
               <small>IG: ${artist.socials.instagram || "sem @ cadastrado"}</small>
               <div class="artist-card-actions">
-                <button class="catalog-link" type="button" data-edit-artist="${artist.id}">Editar</button>
                 <button class="catalog-link" type="button" data-open-catalog="${artist.id}">Ver catálogo →</button>
               </div>
             </div>
@@ -701,30 +733,39 @@ function renderArtistCatalog(artist) {
     ? filteredSongs
         .slice()
         .sort((a, b) => String(b.releaseDate || "").localeCompare(String(a.releaseDate || "")))
-        .map((song) => `
-          <article class="song-table-row">
-            <div class="song-release-cell">
-              ${song.coverUrl
-                ? `<img class="song-cover" src="${song.coverUrl}" alt="Capa de ${song.title}">`
-                : `<span class="song-cover song-cover-placeholder">♪</span>`}
-              <div>
-                <h3>${song.title}</h3>
-                <p>${artist.name} • ${song.type || "Single"}</p>
-                <div class="song-identifiers">
-                  <button class="song-edit-button" type="button" data-song-edit="${song.id}">Editar</button>
-                  <span>ISRC ${song.isrc || "a definir"}</span>
-                  <span>UPC ${song.upc || "a definir"}</span>
+        .map((song) => {
+          const audioSource = getAudioSource(song);
+          return `
+            <article class="song-table-row">
+              <div class="song-release-cell">
+                ${song.coverUrl
+                  ? `<img class="song-cover" src="${song.coverUrl}" alt="Capa de ${song.title}">`
+                  : `<span class="song-cover song-cover-placeholder">♪</span>`}
+                <div>
+                  <h3>${song.title}</h3>
+                  <p>${artist.name} • ${song.type || "Single"}</p>
+                  <div class="song-identifiers">
+                    <button class="song-edit-button" type="button" data-song-edit="${song.id}">Editar</button>
+                    <span>ISRC ${song.isrc || "a definir"}</span>
+                    <span>UPC ${song.upc || "a definir"}</span>
+                  </div>
+                  ${audioSource ? `
+                    <div class="song-audio-actions">
+                      <button class="song-audio-button" type="button" data-audio-play="${song.id}">Play</button>
+                      <a class="song-audio-button" href="${audioSource}" download="${song.title || "musica"}">Baixar</a>
+                    </div>
+                  ` : ""}
                 </div>
               </div>
-            </div>
-            <span class="status-pill status-${song.status}">${getSongStatusLabel(song.status)}</span>
-            <span class="song-date">${song.releaseDate ? formatDate(song.releaseDate) : "A definir"}</span>
-            <span class="distributor-pill">${song.distributor || "Sem distribuidora"}</span>
-            <button class="streams-link" type="button" data-song-id="${song.id}">
-              ${formatNumber(getSongTotal(song))} streams
-            </button>
-          </article>
-        `)
+              <span class="status-pill status-${song.status}">${getSongStatusLabel(song.status)}</span>
+              <span class="song-date">${song.releaseDate ? formatDate(song.releaseDate) : "A definir"}</span>
+              <span class="distributor-pill">${song.distributor || "Sem distribuidora"}</span>
+              <button class="streams-link" type="button" data-song-id="${song.id}">
+                ${formatNumber(getSongTotal(song))} streams
+              </button>
+            </article>
+          `;
+        })
         .join("")
     : "<div class='empty-panel'><h3>Nenhuma música encontrada</h3><p>Adicione uma nova música ou ajuste a busca/filtro.</p></div>";
 }
@@ -846,6 +887,7 @@ document.addEventListener("click", (event) => {
   const statusButton = event.target.closest("[data-song-status]");
   const editSongButton = event.target.closest("[data-song-edit]");
   const editArtistButton = event.target.closest("[data-edit-artist]");
+  const audioButton = event.target.closest("[data-audio-play]");
   const dashboardSong = event.target.closest("[data-view-song]");
   const calendarDay = event.target.closest("[data-calendar-date]");
 
@@ -900,6 +942,35 @@ document.addEventListener("click", (event) => {
       appState.selectedArtistId = artist.id;
       openArtistForm(artist);
     }
+  }
+
+  if (audioButton) {
+    const song = getSong(audioButton.dataset.audioPlay);
+    const audioSource = song ? getAudioSource(song) : "";
+    if (!audioSource) return;
+
+    if (appState.currentAudio?.songId === song.id && !appState.currentAudio.audio.paused) {
+      appState.currentAudio.audio.pause();
+      audioButton.textContent = "Play";
+      return;
+    }
+
+    if (appState.currentAudio?.audio) {
+      appState.currentAudio.audio.pause();
+    }
+
+    const audio = new Audio(audioSource);
+    appState.currentAudio = { songId: song.id, audio };
+    audio.play()
+      .then(() => {
+        audioButton.textContent = "Pausar";
+      })
+      .catch(() => {
+        audioButton.textContent = "Play";
+      });
+    audio.addEventListener("ended", () => {
+      audioButton.textContent = "Play";
+    });
   }
 
   if (dashboardSong) {
@@ -1134,7 +1205,9 @@ document.addEventListener("submit", async (event) => {
     const coverFileName = getFileName(formData, "coverFile") || editingSong?.coverFileName || "";
     const audioFileName = getFileName(formData, "audioFile") || editingSong?.audioFileName || "";
     const coverFile = formData.get("coverFile");
+    const audioFile = formData.get("audioFile");
     let uploadedCoverUrl = "";
+    let uploadedAudioUrl = "";
 
     try {
       uploadedCoverUrl = await uploadSongCover(coverFile);
@@ -1144,6 +1217,18 @@ document.addEventListener("submit", async (event) => {
       } catch (_fallbackError) {
         setMessage(profileMessage, error.message || "Não foi possível enviar a capa da música.", "error");
         return;
+      }
+    }
+
+    try {
+      uploadedAudioUrl = await uploadSongAudio(audioFile);
+    } catch (_error) {
+      if (audioFile && audioFile.size) {
+        try {
+          uploadedAudioUrl = await readFileAsDataUrl(audioFile);
+        } catch (_fallbackError) {
+          uploadedAudioUrl = "";
+        }
       }
     }
 
@@ -1162,7 +1247,7 @@ document.addEventListener("submit", async (event) => {
       lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),
       is_instrumental: isInstrumental,
       cover_file_name: coverFileName,
-      audio_file_name: audioFileName
+      audio_file_name: uploadedAudioUrl || audioFileName
     };
 
     const query = appState.editingSongId
