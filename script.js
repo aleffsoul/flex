@@ -27,6 +27,11 @@ const catalogSubtitle = document.querySelector("#catalogSubtitle");
 const newSongButton = document.querySelector("#newSongButton");
 const batchSongButton = document.querySelector("#batchSongButton");
 const catalogBackButton = document.querySelector("#catalogBackButton");
+const closeSongFormButton = document.querySelector("#closeSongFormButton");
+const cancelSongFormButton = document.querySelector("#cancelSongFormButton");
+const songArtistSelect = document.querySelector("#songArtistSelect");
+const instrumentalToggle = document.querySelector("#instrumentalToggle");
+const lyricsField = document.querySelector("#lyricsField");
 
 const songStatuses = [
   { value: "rascunho", label: "Rascunho" },
@@ -136,6 +141,21 @@ function getFilteredCatalogSongs(artist) {
   });
 }
 
+function getFileName(formData, key) {
+  const file = formData.get(key);
+  return file && typeof file.name === "string" ? file.name : "";
+}
+
+function closeSongForm() {
+  const songForm = document.querySelector("#songForm");
+  if (songForm) songForm.hidden = true;
+}
+
+function syncLyricsVisibility() {
+  if (!lyricsField || !instrumentalToggle) return;
+  lyricsField.hidden = instrumentalToggle.checked;
+}
+
 function setLoading(isLoading) {
   const buttons = [loginForm?.querySelector("button[type='submit']"), signupButton, logoutButton];
   buttons.forEach((button) => {
@@ -216,6 +236,12 @@ async function loadAppData() {
       isrc: song.isrc || "",
       upc: song.upc || "",
       coverUrl: song.cover_url || "",
+      type: song.song_type || "Single",
+      aiPlatform: song.ai_platform || "Não se aplica",
+      lyrics: song.lyrics || "",
+      isInstrumental: Boolean(song.is_instrumental),
+      coverFileName: song.cover_file_name || "",
+      audioFileName: song.audio_file_name || "",
       streams: streamsBySong.get(song.id) || []
     });
     songsByArtist.set(song.artist_id, list);
@@ -467,6 +493,12 @@ function renderArtistCatalog(artist) {
     catalogSubtitle.textContent = `${artist.name} • ${artist.genre || "Artista virtual"} • ${formatNumber(artist.songs.length)} faixas`;
   }
 
+  if (songArtistSelect) {
+    songArtistSelect.innerHTML = appState.artists
+      .map((item) => `<option value="${item.id}" ${item.id === artist.id ? "selected" : ""}>${item.name}</option>`)
+      .join("");
+  }
+
   if (songCatalogSearch && songCatalogSearch.value !== appState.songCatalogSearch) {
     songCatalogSearch.value = appState.songCatalogSearch;
   }
@@ -504,7 +536,7 @@ function renderArtistCatalog(artist) {
                 : `<span class="song-cover song-cover-placeholder">♪</span>`}
               <div>
                 <h3>${song.title}</h3>
-                <p>${artist.name} • Single</p>
+                <p>${artist.name} • ${song.type || "Single"}</p>
                 <div class="song-identifiers">
                   <button class="song-edit-button" type="button" data-song-edit="${song.id}">Editar</button>
                   <span>ISRC ${song.isrc || "a definir"}</span>
@@ -730,13 +762,24 @@ if (newSongButton) {
   newSongButton.addEventListener("click", () => {
     const songForm = document.querySelector("#songForm");
     if (!songForm) return;
-    songForm.hidden = !songForm.hidden;
-    if (!songForm.hidden) {
-      requestAnimationFrame(() => {
-        songForm.querySelector("input[name='title']")?.focus();
-      });
-    }
+    songForm.hidden = false;
+    syncLyricsVisibility();
+    requestAnimationFrame(() => {
+      songForm.querySelector("input[name='title']")?.focus();
+    });
   });
+}
+
+if (closeSongFormButton) {
+  closeSongFormButton.addEventListener("click", closeSongForm);
+}
+
+if (cancelSongFormButton) {
+  cancelSongFormButton.addEventListener("click", closeSongForm);
+}
+
+if (instrumentalToggle) {
+  instrumentalToggle.addEventListener("change", syncLyricsVisibility);
 }
 
 if (batchSongButton) {
@@ -825,18 +868,26 @@ document.addEventListener("submit", async (event) => {
   if (event.target.id === "songForm") {
     event.preventDefault();
     const formData = new FormData(event.target);
+    const artistId = String(formData.get("artistId") || appState.selectedArtistId || "");
+    const isInstrumental = formData.get("isInstrumental") === "on";
     const { data, error } = await supabaseClient
       .from("songs")
       .insert({
         owner_id: getUserId(),
-        artist_id: appState.selectedArtistId,
+        artist_id: artistId,
         title: String(formData.get("title")),
         release_date: String(formData.get("releaseDate")),
         distributor: String(formData.get("distributor")),
         status: String(formData.get("status") || "rascunho"),
         isrc: String(formData.get("isrc") || ""),
         upc: String(formData.get("upc") || ""),
-        cover_url: String(formData.get("coverUrl") || "")
+        cover_url: "",
+        song_type: String(formData.get("type") || "Single"),
+        ai_platform: String(formData.get("aiPlatform") || "Não se aplica"),
+        lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),
+        is_instrumental: isInstrumental,
+        cover_file_name: getFileName(formData, "coverFile"),
+        audio_file_name: getFileName(formData, "audioFile")
       })
       .select()
       .single();
@@ -848,6 +899,7 @@ document.addEventListener("submit", async (event) => {
 
     await createInitialStreamRows(data.id);
     appState.selectedSongId = data.id;
+    appState.selectedArtistId = data.artist_id;
     appState.artistMode = "catalog";
     event.target.reset();
     event.target.hidden = true;

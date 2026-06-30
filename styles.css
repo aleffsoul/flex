@@ -1631,22 +1631,205 @@ h3 {
   font-size: 1.25rem;
 }
 
-.song-create-panel {
-  padding: 18px;
-  background: var(--app-card);
+.song-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(13, 17, 15, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.song-form-dialog {
+  display: grid;
+  gap: 18px;
+  width: min(760px, 100%);
+  max-height: min(860px, calc(100svh - 48px));
+  overflow: auto;
+  padding: 26px;
+  color: var(--app-ink);
+  background: #ffffff;
   border: 1px solid var(--app-line);
   border-radius: 18px;
-  box-shadow: var(--app-shadow);
+  box-shadow: 0 28px 80px rgba(9, 13, 11, 0.28);
 }
 
-.song-create-grid {
+.song-form-topline {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.song-form-topline h3 {
+  margin: 0 0 4px;
+  color: var(--app-ink);
+  font-size: 1.75rem;
+}
+
+.song-form-topline span {
+  color: var(--app-muted);
+}
+
+.modal-close {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: #65706b;
+  background: #eef1ed;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 900;
 }
 
-.song-create-grid .button {
+.field-label,
+.song-form-grid label > span,
+.lyrics-field > span,
+.audio-upload > span {
+  color: #6f7b75;
+  font-size: 0.72rem;
+  font-weight: 950;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.song-cover-upload,
+.lyrics-field,
+.audio-upload {
+  display: grid;
+  gap: 8px;
+}
+
+.file-drop {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: #fbfcfa;
+  border: 1px dashed #cdd8c7;
+  border-radius: 16px;
+}
+
+.cover-preview {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  color: #82907f;
+  background: #eef3ec;
+  border-radius: 14px;
+  font-size: 1.8rem;
+  font-weight: 950;
+}
+
+.file-drop label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.file-drop small {
+  color: var(--app-muted);
+}
+
+.song-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.song-form-grid label,
+.lyrics-field,
+.audio-upload {
+  display: grid;
+  gap: 8px;
+}
+
+.song-form-grid input,
+.song-form-grid select,
+.lyrics-field textarea,
+.audio-upload input,
+.file-drop input {
   width: 100%;
+  min-width: 0;
+  color: var(--app-ink);
+  background: #fbfcfa;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  outline: 0;
+}
+
+.song-form-grid input,
+.song-form-grid select,
+.audio-upload input,
+.file-drop input {
+  min-height: 48px;
+  padding: 0 12px;
+}
+
+.lyrics-field textarea {
+  min-height: 118px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.song-form-grid input:focus,
+.song-form-grid select:focus,
+.lyrics-field textarea:focus,
+.audio-upload input:focus,
+.file-drop input:focus {
+  border-color: var(--app-accent-strong);
+  box-shadow: 0 0 0 4px rgba(184, 242, 70, 0.22);
+}
+
+.instrumental-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 14px;
+  color: #405023;
+  background: #f1fbe3;
+  border: 1px solid #cdeca0;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.instrumental-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--app-accent-strong);
+}
+
+.form-note {
+  margin: 0;
+  padding: 12px 14px;
+  color: #66705e;
+  background: #f5f9ef;
+  border-radius: 12px;
+  font-size: 0.82rem;
+}
+
+.song-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 8px;
+}
+
+.song-form-actions .button.secondary {
+  color: var(--app-ink);
+  background: #ffffff;
+  border-color: var(--app-line);
 }
 
 .song-table-card {
@@ -1833,7 +2016,7 @@ h3 {
   .artist-filter-bar,
   .artist-create-grid,
   .song-status-grid,
-  .song-create-grid {
+  .song-form-grid {
     grid-template-columns: 1fr;
   }
 

@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=catalog-1">
+    <link rel="stylesheet" href="styles.css?v=catalog-2">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -316,26 +316,107 @@
               <span id="songCountLabel">0 faixas</span>
             </div>
 
-            <form class="compact-form add-song-form song-create-panel" id="songForm" hidden>
-              <div class="panel-header">
-                <h3>Nova música</h3>
-                <span>Cadastro rápido</span>
-              </div>
-              <div class="song-create-grid">
-                <input type="text" name="title" placeholder="Nome da música" required>
-                <input type="date" name="releaseDate" required>
-                <input type="text" name="distributor" placeholder="Distribuidora" required>
-                <select name="status">
-                  <option value="rascunho">Rascunho</option>
-                  <option value="pronta">Pronta</option>
-                  <option value="em_analise">Em análise</option>
-                  <option value="agendada">Agendada</option>
-                  <option value="publicada">Publicada</option>
-                </select>
-                <input type="text" name="isrc" placeholder="ISRC">
-                <input type="text" name="upc" placeholder="UPC">
-                <input type="url" name="coverUrl" placeholder="URL da capa">
-                <button class="button primary" type="submit">Cadastrar música</button>
+            <form class="compact-form add-song-form song-create-panel song-form-overlay" id="songForm" hidden>
+              <div class="song-form-dialog">
+                <div class="song-form-topline">
+                  <div>
+                    <p class="eyebrow">Novo lançamento</p>
+                    <h3>Cadastrar música</h3>
+                    <span>Registre os dados principais, agenda, distribuidora e arquivos da faixa.</span>
+                  </div>
+                  <button class="modal-close" id="closeSongFormButton" type="button" aria-label="Fechar formulário">×</button>
+                </div>
+
+                <div class="song-cover-upload">
+                  <span class="field-label">Capa do álbum</span>
+                  <div class="file-drop">
+                    <span class="cover-preview" aria-hidden="true">♪</span>
+                    <label>
+                      <input type="file" name="coverFile" accept="image/*">
+                      <small>Use preferencialmente uma capa quadrada.</small>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="song-form-grid">
+                  <label>
+                    <span>Título *</span>
+                    <input type="text" name="title" placeholder="Nome do lançamento" required>
+                  </label>
+                  <label>
+                    <span>ISRC da faixa</span>
+                    <input type="text" name="isrc" placeholder="Ex.: BR-ABC-26-00001">
+                  </label>
+                  <label>
+                    <span>UPC do lançamento</span>
+                    <input type="text" name="upc" placeholder="Código de barras / UPC">
+                  </label>
+                  <label>
+                    <span>Artista *</span>
+                    <select name="artistId" id="songArtistSelect" required></select>
+                  </label>
+                  <label>
+                    <span>Tipo *</span>
+                    <select name="type" required>
+                      <option value="Single">Single</option>
+                      <option value="EP">EP</option>
+                      <option value="Álbum">Álbum</option>
+                      <option value="Remix">Remix</option>
+                      <option value="Versão acústica">Versão acústica</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Distribuidora *</span>
+                    <select name="distributor" required>
+                      <option value="">Selecione</option>
+                      <option value="MusicPro">MusicPro</option>
+                      <option value="DistroKid">DistroKid</option>
+                      <option value="ONErpm">ONErpm</option>
+                      <option value="CD Baby">CD Baby</option>
+                      <option value="TuneCore">TuneCore</option>
+                      <option value="Tratore">Tratore</option>
+                      <option value="Altafonte">Altafonte</option>
+                      <option value="Ditto Music">Ditto Music</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span>Data de lançamento *</span>
+                    <input type="date" name="releaseDate" required>
+                  </label>
+                  <label>
+                    <span>Plataforma IA</span>
+                    <select name="aiPlatform">
+                      <option value="Não se aplica">Não se aplica</option>
+                      <option value="Suno">Suno</option>
+                      <option value="Udio">Udio</option>
+                      <option value="Mureka">Mureka</option>
+                      <option value="AIVA">AIVA</option>
+                      <option value="Soundraw">Soundraw</option>
+                    </select>
+                  </label>
+                </div>
+
+                <label class="instrumental-toggle">
+                  <input type="checkbox" name="isInstrumental" id="instrumentalToggle">
+                  <span>Música instrumental</span>
+                </label>
+
+                <label class="lyrics-field" id="lyricsField">
+                  <span>Letra da música</span>
+                  <textarea name="lyrics" placeholder="Cole a letra da música, se quiser manter no cadastro."></textarea>
+                </label>
+
+                <label class="audio-upload">
+                  <span>Áudio original (MP3/WAV)</span>
+                  <input type="file" name="audioFile" accept=".mp3,.wav,audio/mpeg,audio/wav">
+                </label>
+
+                <p class="form-note">Fluxo: rascunho guarda a ideia. Pronta exige título, artista, tipo e áudio. Agendada adiciona ISRC, UPC, distribuidora e data.</p>
+
+                <div class="song-form-actions">
+                  <button class="button secondary" id="cancelSongFormButton" type="button">Cancelar</button>
+                  <button class="button primary" type="submit">Salvar lançamento</button>
+                </div>
               </div>
             </form>
 
@@ -439,7 +520,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=catalog-1"></script>
-    <script src="script.js?v=catalog-1"></script>
+    <script src="supabase.js?v=catalog-2"></script>
+    <script src="script.js?v=catalog-2"></script>
   </body>
 </html>
