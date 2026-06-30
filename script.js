@@ -375,20 +375,12 @@ async function loadAppData() {
     supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
   ]);
 
-  const firstError = [
-    profileResult.error,
-    artistsResult.error,
-    songsResult.error,
-    streamsResult.error,
-    releasesResult.error
-  ].find(Boolean);
-
-  if (firstError) {
-    setMessage(loginMessage, firstError.message, "error");
+  if (artistsResult.error) {
+    setMessage(loginMessage, artistsResult.error.message, "error");
     return;
   }
 
-  if (!profileResult.data) {
+  if (!profileResult.data && !profileResult.error) {
     await supabaseClient.from("profiles").upsert({
       id: userId,
       name: appState.session.user.email?.split("@")[0] || "Flex Music Admin",
@@ -398,10 +390,14 @@ async function loadAppData() {
   }
 
   const profile = profileResult.data || {};
+  const artistsData = artistsResult.data || [];
+  const songsData = songsResult.error ? [] : (songsResult.data || []);
+  const streamsData = streamsResult.error ? [] : (streamsResult.data || []);
+  const releasesData = releasesResult.error ? [] : (releasesResult.data || []);
   const songsByArtist = new Map();
   const streamsBySong = new Map();
 
-  streamsResult.data.forEach((stream) => {
+  streamsData.forEach((stream) => {
     const list = streamsBySong.get(stream.song_id) || [];
     list.push({
       id: stream.id,
@@ -411,7 +407,7 @@ async function loadAppData() {
     streamsBySong.set(stream.song_id, list);
   });
 
-  songsResult.data.forEach((song) => {
+  songsData.forEach((song) => {
     const list = songsByArtist.get(song.artist_id) || [];
     list.push({
       id: song.id,
@@ -443,7 +439,7 @@ async function loadAppData() {
     currency: profile.currency || "BRL"
   };
 
-  appState.artists = artistsResult.data.map((artist) => ({
+  appState.artists = artistsData.map((artist) => ({
     id: artist.id,
     name: artist.name,
     genre: artist.genre || "",
@@ -461,7 +457,7 @@ async function loadAppData() {
     songs: songsByArtist.get(artist.id) || []
   }));
 
-  const manualReleases = releasesResult.data.map((release) => ({
+  const manualReleases = releasesData.map((release) => ({
     id: release.id,
     date: release.release_date,
     title: release.title,
@@ -471,7 +467,7 @@ async function loadAppData() {
     source: "manual"
   }));
 
-  const songReleases = songsResult.data
+  const songReleases = songsData
     .filter((song) => song.release_date)
     .map((song) => ({
       id: `song-${song.id}`,
