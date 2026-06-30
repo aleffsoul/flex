@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=catalog-2">
+    <link rel="stylesheet" href="styles.css?v=catalog-3">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -268,15 +268,67 @@
             <span id="artistCountLabel">0 artistas</span>
           </div>
 
-          <form class="compact-form add-artist-form artist-create-panel" id="artistForm" hidden>
-            <div class="panel-header">
+          <form class="compact-form add-artist-form artist-create-panel artist-form-overlay" id="artistForm" hidden>
+            <div class="panel-header legacy-artist-fields" hidden>
               <h3>Novo artista</h3>
               <span>Cadastro rápido</span>
             </div>
-            <div class="artist-create-grid">
-                <input type="text" name="name" placeholder="Nome do artista" required>
-                <input type="text" name="genre" placeholder="Gênero musical">
+            <div class="artist-create-grid legacy-artist-fields" hidden>
+                <input type="text" name="name" placeholder="Nome do artista" disabled>
+                <input type="text" name="genre" placeholder="Gênero musical" disabled>
                 <button class="button primary" type="submit">Cadastrar artista</button>
+            </div>
+            <div class="artist-form-dialog">
+              <div class="song-form-topline">
+                <div>
+                  <p class="eyebrow" id="artistFormEyebrow">Artista</p>
+                  <h3 id="artistFormTitle">Novo artista</h3>
+                  <span>Atualize identidade, redes e números manuais do perfil.</span>
+                </div>
+                <button class="modal-close" id="closeArtistFormButton" type="button" aria-label="Fechar formulário">×</button>
+              </div>
+
+              <div class="song-form-grid artist-edit-grid">
+                <label>
+                  <span>Foto de perfil</span>
+                  <input type="url" name="photoUrl" placeholder="URL da foto do artista">
+                </label>
+                <label>
+                  <span>Nome artístico *</span>
+                  <input type="text" name="displayName" placeholder="Nome do artista" required>
+                </label>
+                <label>
+                  <span>Gênero musical</span>
+                  <input type="text" name="displayGenre" placeholder="Gênero musical">
+                </label>
+                <label>
+                  <span>@ do Instagram</span>
+                  <input type="text" name="instagram" placeholder="@usuario">
+                </label>
+                <label>
+                  <span>Perfil do Spotify</span>
+                  <input type="url" name="spotifyProfile" placeholder="https://open.spotify.com/artist/...">
+                </label>
+                <label>
+                  <span>Seguidores Instagram</span>
+                  <input type="number" name="instagramFollowers" min="0" step="1" placeholder="0">
+                </label>
+                <label>
+                  <span>Seguidores Spotify</span>
+                  <input type="number" name="spotifyFollowers" min="0" step="1" placeholder="0">
+                </label>
+                <label class="wide-field">
+                  <span>Biografia curta</span>
+                  <textarea name="bio" placeholder="Resumo breve sobre o artista."></textarea>
+                </label>
+              </div>
+
+              <div class="artist-form-actions">
+                <button class="button danger" id="deleteArtistButton" type="button" hidden>Excluir artista</button>
+                <span></span>
+                <button class="button secondary" id="cancelArtistFormButton" type="button">Cancelar</button>
+                <button class="button primary" type="submit">Salvar alterações</button>
+              </div>
             </div>
           </form>
 
@@ -320,8 +372,8 @@
               <div class="song-form-dialog">
                 <div class="song-form-topline">
                   <div>
-                    <p class="eyebrow">Novo lançamento</p>
-                    <h3>Cadastrar música</h3>
+                    <p class="eyebrow" id="songFormEyebrow">Novo lançamento</p>
+                    <h3 id="songFormTitle">Cadastrar música</h3>
                     <span>Registre os dados principais, agenda, distribuidora e arquivos da faixa.</span>
                   </div>
                   <button class="modal-close" id="closeSongFormButton" type="button" aria-label="Fechar formulário">×</button>
@@ -520,7 +572,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=catalog-2"></script>
-    <script src="script.js?v=catalog-2"></script>
+    <script src="supabase.js?v=catalog-3"></script>
+    <script src="script.js?v=catalog-3"></script>
   </body>
 </html>

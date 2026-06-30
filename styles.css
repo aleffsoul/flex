@@ -1550,6 +1550,13 @@ h3 {
   font-weight: 900;
 }
 
+.artist-card-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
 .artist-create-panel {
   padding: 18px;
   background: var(--app-card);
@@ -1629,6 +1636,70 @@ h3 {
 .song-status-card strong {
   color: var(--app-ink);
   font-size: 1.25rem;
+}
+
+.artist-form-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(13, 17, 15, 0.62);
+  backdrop-filter: blur(5px);
+}
+
+.artist-form-dialog {
+  display: grid;
+  gap: 18px;
+  width: min(760px, 100%);
+  max-height: min(860px, calc(100svh - 48px));
+  overflow: auto;
+  padding: 26px;
+  color: var(--app-ink);
+  background: #ffffff;
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  box-shadow: 0 28px 80px rgba(9, 13, 11, 0.28);
+}
+
+.wide-field {
+  grid-column: 1 / -1;
+}
+
+.wide-field textarea {
+  min-height: 118px;
+  padding: 14px;
+  color: var(--app-ink);
+  background: #fbfcfa;
+  border: 1px solid var(--app-line);
+  border-radius: 12px;
+  outline: 0;
+  resize: vertical;
+}
+
+.wide-field textarea:focus {
+  border-color: var(--app-accent-strong);
+  box-shadow: 0 0 0 4px rgba(184, 242, 70, 0.22);
+}
+
+.artist-form-actions {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.button.danger {
+  color: #9c1f1f;
+  background: #fff3f0;
+  border-color: #f1c4bc;
+}
+
+.button.danger:hover,
+.button.danger:focus-visible {
+  color: #ffffff;
+  background: #b42318;
 }
 
 .song-form-overlay {
@@ -2016,8 +2087,14 @@ h3 {
   .artist-filter-bar,
   .artist-create-grid,
   .song-status-grid,
-  .song-form-grid {
+  .song-form-grid,
+  .artist-form-actions {
     grid-template-columns: 1fr;
+  }
+
+  .artist-form-actions .button,
+  .song-form-actions .button {
+    width: 100%;
   }
 
   .song-table-card {

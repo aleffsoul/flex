@@ -32,6 +32,13 @@ const cancelSongFormButton = document.querySelector("#cancelSongFormButton");
 const songArtistSelect = document.querySelector("#songArtistSelect");
 const instrumentalToggle = document.querySelector("#instrumentalToggle");
 const lyricsField = document.querySelector("#lyricsField");
+const songFormTitle = document.querySelector("#songFormTitle");
+const songFormEyebrow = document.querySelector("#songFormEyebrow");
+const closeArtistFormButton = document.querySelector("#closeArtistFormButton");
+const cancelArtistFormButton = document.querySelector("#cancelArtistFormButton");
+const deleteArtistButton = document.querySelector("#deleteArtistButton");
+const artistFormTitle = document.querySelector("#artistFormTitle");
+const artistFormEyebrow = document.querySelector("#artistFormEyebrow");
 
 const songStatuses = [
   { value: "rascunho", label: "Rascunho" },
@@ -60,7 +67,9 @@ const appState = {
   artistGenre: "",
   artistMode: "list",
   songCatalogSearch: "",
-  songStatus: ""
+  songStatus: "",
+  editingSongId: null,
+  editingArtistId: null
 };
 
 if (year) {
@@ -146,9 +155,90 @@ function getFileName(formData, key) {
   return file && typeof file.name === "string" ? file.name : "";
 }
 
+function getSong(songId) {
+  return getAllSongs().find((song) => song.id === songId);
+}
+
+function setSelectValue(select, value) {
+  if (!select) return;
+  select.value = value || "";
+}
+
 function closeSongForm() {
   const songForm = document.querySelector("#songForm");
   if (songForm) songForm.hidden = true;
+  appState.editingSongId = null;
+}
+
+function openSongForm(song = null) {
+  const songForm = document.querySelector("#songForm");
+  if (!songForm) return;
+
+  appState.editingSongId = song?.id || null;
+  songForm.reset();
+
+  if (songFormTitle) songFormTitle.textContent = song ? "Editar música" : "Cadastrar música";
+  if (songFormEyebrow) songFormEyebrow.textContent = song ? "Editar lançamento" : "Novo lançamento";
+
+  const selectedArtist = getArtist(song?.artistId || appState.selectedArtistId);
+  if (songArtistSelect) {
+    songArtistSelect.innerHTML = appState.artists
+      .map((artist) => `<option value="${artist.id}" ${artist.id === selectedArtist?.id ? "selected" : ""}>${artist.name}</option>`)
+      .join("");
+  }
+
+  if (song) {
+    songForm.elements.title.value = song.title || "";
+    songForm.elements.isrc.value = song.isrc || "";
+    songForm.elements.upc.value = song.upc || "";
+    setSelectValue(songForm.elements.artistId, song.artistId);
+    setSelectValue(songForm.elements.type, song.type || "Single");
+    setSelectValue(songForm.elements.distributor, song.distributor || "");
+    songForm.elements.releaseDate.value = song.releaseDate || "";
+    setSelectValue(songForm.elements.aiPlatform, song.aiPlatform || "Não se aplica");
+    songForm.elements.isInstrumental.checked = Boolean(song.isInstrumental);
+    songForm.elements.lyrics.value = song.lyrics || "";
+  }
+
+  syncLyricsVisibility();
+  songForm.hidden = false;
+  requestAnimationFrame(() => {
+    songForm.querySelector("input[name='title']")?.focus();
+  });
+}
+
+function closeArtistForm() {
+  const artistForm = document.querySelector("#artistForm");
+  if (artistForm) artistForm.hidden = true;
+  appState.editingArtistId = null;
+}
+
+function openArtistForm(artist = null) {
+  const artistForm = document.querySelector("#artistForm");
+  if (!artistForm) return;
+
+  appState.editingArtistId = artist?.id || null;
+  artistForm.reset();
+
+  if (artistFormTitle) artistFormTitle.textContent = artist ? "Editar artista" : "Novo artista";
+  if (artistFormEyebrow) artistFormEyebrow.textContent = artist ? "Perfil do artista" : "Artista";
+  if (deleteArtistButton) deleteArtistButton.hidden = !artist;
+
+  if (artist) {
+    artistForm.elements.photoUrl.value = artist.photoUrl || "";
+    artistForm.elements.displayName.value = artist.name || "";
+    artistForm.elements.displayGenre.value = artist.genre || "";
+    artistForm.elements.instagram.value = artist.socials.instagram || "";
+    artistForm.elements.spotifyProfile.value = artist.socials.spotify || "";
+    artistForm.elements.instagramFollowers.value = artist.instagramFollowers || 0;
+    artistForm.elements.spotifyFollowers.value = artist.spotifyFollowers || 0;
+    artistForm.elements.bio.value = artist.bio || "";
+  }
+
+  artistForm.hidden = false;
+  requestAnimationFrame(() => {
+    artistForm.querySelector("input[name='displayName']")?.focus();
+  });
 }
 
 function syncLyricsVisibility() {
@@ -266,6 +356,7 @@ async function loadAppData() {
     photoUrl: artist.photo_url || "",
     socials: {
       instagram: artist.instagram || "",
+      spotify: artist.spotify_profile || "",
       tiktok: artist.tiktok || "",
       youtube: artist.youtube || ""
     },
@@ -372,10 +463,7 @@ function renderNavigation() {
 function focusArtistForm() {
   appState.artistMode = "list";
   renderArtists();
-  document.querySelector("#artistForm")?.removeAttribute("hidden");
-  requestAnimationFrame(() => {
-    document.querySelector("#artistForm input[name='name']")?.focus();
-  });
+  openArtistForm();
 }
 
 function renderDashboard() {
@@ -467,14 +555,17 @@ function renderArtists() {
             </div>
             <p class="artist-bio">${artist.bio || "Sem biografia cadastrada."}</p>
             <div class="artist-stats">
-              <span><strong>${formatNumber(artist.songs.length)}</strong><small>Lanç.</small></span>
+              <span><strong>${formatNumber(artist.songs.filter((song) => song.status === "publicada").length)}/${formatNumber(artist.songs.length)}</strong><small>Lanç.</small></span>
               <span><strong>${formatNumber(artist.songs.reduce((total, song) => total + getSongTotal(song), 0))}</strong><small>Streams</small></span>
               <span><strong>${formatNumber(artist.instagramFollowers)}</strong><small>Instagram</small></span>
               <span><strong>${formatNumber(artist.spotifyFollowers)}</strong><small>Spotify</small></span>
             </div>
             <div class="artist-card-footer">
               <small>IG: ${artist.socials.instagram || "sem @ cadastrado"}</small>
-              <button class="catalog-link" type="button" data-open-catalog="${artist.id}">Ver catálogo →</button>
+              <div class="artist-card-actions">
+                <button class="catalog-link" type="button" data-edit-artist="${artist.id}">Editar</button>
+                <button class="catalog-link" type="button" data-open-catalog="${artist.id}">Ver catálogo →</button>
+              </div>
             </div>
           </article>
         `)
@@ -672,6 +763,7 @@ document.addEventListener("click", (event) => {
   const songButton = event.target.closest("[data-song-id]");
   const statusButton = event.target.closest("[data-song-status]");
   const editSongButton = event.target.closest("[data-song-edit]");
+  const editArtistButton = event.target.closest("[data-edit-artist]");
   const dashboardSong = event.target.closest("[data-view-song]");
   const calendarDay = event.target.closest("[data-calendar-date]");
 
@@ -712,8 +804,20 @@ document.addEventListener("click", (event) => {
   }
 
   if (editSongButton) {
-    appState.selectedSongId = editSongButton.dataset.songEdit;
-    setMessage(profileMessage, "Edição detalhada da música será ligada na próxima etapa.", "success");
+    const song = getSong(editSongButton.dataset.songEdit);
+    if (song) {
+      appState.selectedSongId = song.id;
+      appState.selectedArtistId = song.artistId;
+      openSongForm(song);
+    }
+  }
+
+  if (editArtistButton) {
+    const artist = getArtist(editArtistButton.dataset.editArtist);
+    if (artist) {
+      appState.selectedArtistId = artist.id;
+      openArtistForm(artist);
+    }
   }
 
   if (dashboardSong) {
@@ -760,13 +864,7 @@ if (catalogBackButton) {
 
 if (newSongButton) {
   newSongButton.addEventListener("click", () => {
-    const songForm = document.querySelector("#songForm");
-    if (!songForm) return;
-    songForm.hidden = false;
-    syncLyricsVisibility();
-    requestAnimationFrame(() => {
-      songForm.querySelector("input[name='title']")?.focus();
-    });
+    openSongForm();
   });
 }
 
@@ -778,8 +876,37 @@ if (cancelSongFormButton) {
   cancelSongFormButton.addEventListener("click", closeSongForm);
 }
 
+if (closeArtistFormButton) {
+  closeArtistFormButton.addEventListener("click", closeArtistForm);
+}
+
+if (cancelArtistFormButton) {
+  cancelArtistFormButton.addEventListener("click", closeArtistForm);
+}
+
 if (instrumentalToggle) {
   instrumentalToggle.addEventListener("change", syncLyricsVisibility);
+}
+
+if (deleteArtistButton) {
+  deleteArtistButton.addEventListener("click", async () => {
+    const artist = getArtist(appState.editingArtistId);
+    if (!artist) return;
+    const confirmed = window.confirm(`Excluir ${artist.name}? As músicas e streams desse artista também serão removidos.`);
+    if (!confirmed) return;
+
+    const { error } = await supabaseClient.from("artists").delete().eq("id", artist.id);
+    if (error) {
+      setMessage(profileMessage, error.message, "error");
+      return;
+    }
+
+    closeArtistForm();
+    appState.selectedArtistId = null;
+    appState.selectedSongId = null;
+    await loadAppData();
+    renderApp();
+  });
 }
 
 if (batchSongButton) {
@@ -841,16 +968,25 @@ document.addEventListener("submit", async (event) => {
   if (event.target.id === "artistForm") {
     event.preventDefault();
     const formData = new FormData(event.target);
-    const { data, error } = await supabaseClient
-      .from("artists")
-      .insert({
-        owner_id: getUserId(),
-        name: String(formData.get("name")),
-        genre: String(formData.get("genre") || ""),
-        avatar: getInitials(String(formData.get("name")))
-      })
-      .select()
-      .single();
+    const artistName = String(formData.get("displayName") || "").trim();
+    const payload = {
+      owner_id: getUserId(),
+      name: artistName,
+      genre: String(formData.get("displayGenre") || ""),
+      avatar: getInitials(artistName),
+      bio: String(formData.get("bio") || ""),
+      instagram: String(formData.get("instagram") || ""),
+      spotify_profile: String(formData.get("spotifyProfile") || ""),
+      instagram_followers: Number(formData.get("instagramFollowers") || 0),
+      spotify_followers: Number(formData.get("spotifyFollowers") || 0),
+      photo_url: String(formData.get("photoUrl") || "")
+    };
+
+    const query = appState.editingArtistId
+      ? supabaseClient.from("artists").update(payload).eq("id", appState.editingArtistId).select().single()
+      : supabaseClient.from("artists").insert(payload).select().single();
+
+    const { data, error } = await query;
 
     if (error) {
       setMessage(profileMessage, error.message, "error");
@@ -861,6 +997,7 @@ document.addEventListener("submit", async (event) => {
     appState.selectedSongId = null;
     event.target.reset();
     event.target.hidden = true;
+    appState.editingArtistId = null;
     await loadAppData();
     renderApp();
   }
@@ -870,39 +1007,47 @@ document.addEventListener("submit", async (event) => {
     const formData = new FormData(event.target);
     const artistId = String(formData.get("artistId") || appState.selectedArtistId || "");
     const isInstrumental = formData.get("isInstrumental") === "on";
-    const { data, error } = await supabaseClient
-      .from("songs")
-      .insert({
-        owner_id: getUserId(),
-        artist_id: artistId,
-        title: String(formData.get("title")),
-        release_date: String(formData.get("releaseDate")),
-        distributor: String(formData.get("distributor")),
-        status: String(formData.get("status") || "rascunho"),
-        isrc: String(formData.get("isrc") || ""),
-        upc: String(formData.get("upc") || ""),
-        cover_url: "",
-        song_type: String(formData.get("type") || "Single"),
-        ai_platform: String(formData.get("aiPlatform") || "Não se aplica"),
-        lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),
-        is_instrumental: isInstrumental,
-        cover_file_name: getFileName(formData, "coverFile"),
-        audio_file_name: getFileName(formData, "audioFile")
-      })
-      .select()
-      .single();
+    const editingSong = getSong(appState.editingSongId);
+    const coverFileName = getFileName(formData, "coverFile") || editingSong?.coverFileName || "";
+    const audioFileName = getFileName(formData, "audioFile") || editingSong?.audioFileName || "";
+    const payload = {
+      owner_id: getUserId(),
+      artist_id: artistId,
+      title: String(formData.get("title")),
+      release_date: String(formData.get("releaseDate")),
+      distributor: String(formData.get("distributor")),
+      status: editingSong?.status || "rascunho",
+      isrc: String(formData.get("isrc") || ""),
+      upc: String(formData.get("upc") || ""),
+      cover_url: editingSong?.coverUrl || "",
+      song_type: String(formData.get("type") || "Single"),
+      ai_platform: String(formData.get("aiPlatform") || "Não se aplica"),
+      lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),
+      is_instrumental: isInstrumental,
+      cover_file_name: coverFileName,
+      audio_file_name: audioFileName
+    };
+
+    const query = appState.editingSongId
+      ? supabaseClient.from("songs").update(payload).eq("id", appState.editingSongId).select().single()
+      : supabaseClient.from("songs").insert(payload).select().single();
+
+    const { data, error } = await query;
 
     if (error) {
       setMessage(profileMessage, error.message, "error");
       return;
     }
 
-    await createInitialStreamRows(data.id);
+    if (!appState.editingSongId) {
+      await createInitialStreamRows(data.id);
+    }
     appState.selectedSongId = data.id;
     appState.selectedArtistId = data.artist_id;
     appState.artistMode = "catalog";
     event.target.reset();
     event.target.hidden = true;
+    appState.editingSongId = null;
     await loadAppData();
     renderApp();
   }
