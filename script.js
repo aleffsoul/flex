@@ -13,6 +13,7 @@ const profileForm = document.querySelector("#profileForm");
 const profileMessage = document.querySelector("#profileMessage");
 const releaseForm = document.querySelector("#releaseForm");
 const releaseArtistSelect = document.querySelector("#releaseArtistSelect");
+const appSearch = document.querySelector("#appSearch");
 
 const appState = {
   session: null,
@@ -292,6 +293,12 @@ function renderNavigation() {
   });
 }
 
+function focusArtistForm() {
+  requestAnimationFrame(() => {
+    document.querySelector("#artistForm input[name='name']")?.focus();
+  });
+}
+
 function renderDashboard() {
   const songs = getAllSongs();
   const totalStreams = songs.reduce((total, song) => total + getSongTotal(song), 0);
@@ -526,6 +533,9 @@ document.addEventListener("click", (event) => {
   if (navButton) {
     appState.selectedView = navButton.dataset.view;
     renderApp();
+    if (navButton.classList.contains("app-create-button")) {
+      focusArtistForm();
+    }
   }
 
   if (artistButton) {
@@ -552,6 +562,30 @@ document.addEventListener("click", (event) => {
     releaseForm.title.focus();
   }
 });
+
+if (appSearch) {
+  appSearch.addEventListener("input", () => {
+    const term = appSearch.value.trim().toLowerCase();
+    if (!term) return;
+
+    const artist = appState.artists.find((item) =>
+      item.name.toLowerCase().includes(term) ||
+      item.genre.toLowerCase().includes(term)
+    );
+
+    const song = getAllSongs().find((item) =>
+      item.title.toLowerCase().includes(term) ||
+      item.artistName.toLowerCase().includes(term)
+    );
+
+    if (artist || song) {
+      appState.selectedView = "artists";
+      appState.selectedArtistId = song?.artistId || artist.id;
+      appState.selectedSongId = song?.id || getArtist(appState.selectedArtistId).songs[0]?.id || null;
+      renderApp();
+    }
+  });
+}
 
 document.querySelector("#prevMonth")?.addEventListener("click", () => {
   appState.calendarDate.setMonth(appState.calendarDate.getMonth() - 1);

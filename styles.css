@@ -918,6 +918,459 @@ h3 {
   background: rgba(255, 255, 255, 0.03);
 }
 
+/* Backstage product UI */
+.app-shell {
+  --app-bg: #f5f7f2;
+  --app-bg-soft: #eef3ec;
+  --app-card: #ffffff;
+  --app-ink: #111515;
+  --app-muted: #727a77;
+  --app-line: #dfe5dc;
+  --app-accent: #b8f246;
+  --app-accent-strong: #9ddb28;
+  --app-sidebar: #0f1512;
+  --app-sidebar-soft: #19211d;
+  --app-shadow: 0 16px 40px rgba(20, 26, 22, 0.08);
+  grid-template-columns: 298px minmax(0, 1fr);
+  background:
+    radial-gradient(circle at 78% 3%, rgba(184, 242, 70, 0.18), transparent 30%),
+    linear-gradient(180deg, #f8faf6 0%, var(--app-bg) 44%, #f1f5f0 100%);
+  color: var(--app-ink);
+}
+
+.app-shell .eyebrow {
+  color: #6f7b75;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+}
+
+.app-shell .button {
+  min-height: 44px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+}
+
+.app-shell .button.primary {
+  background: var(--app-sidebar);
+  color: #ffffff;
+}
+
+.app-shell .button.primary:hover,
+.app-shell .button.primary:focus-visible {
+  background: #000000;
+  color: var(--app-accent);
+}
+
+.app-shell .button.secondary {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.13);
+}
+
+.app-sidebar {
+  gap: 26px;
+  padding: 32px 22px 24px;
+  border-right: 0;
+  background: var(--app-sidebar);
+  color: #ffffff;
+}
+
+.app-sidebar::after {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  height: 160px;
+  pointer-events: none;
+  content: "";
+  background: radial-gradient(circle at bottom right, rgba(184, 242, 70, 0.13), transparent 68%);
+}
+
+.app-brand {
+  position: relative;
+  z-index: 1;
+  gap: 14px;
+}
+
+.app-brand .brand-mark {
+  width: 48px;
+  height: 48px;
+  background: var(--app-accent);
+  border: 0;
+  box-shadow: none;
+}
+
+.app-brand .brand-mark span {
+  background: #101511;
+}
+
+.app-brand .brand-mark span:nth-child(2),
+.app-brand .brand-mark span:nth-child(3) {
+  background: #101511;
+}
+
+.app-brand .brand-name {
+  color: #ffffff;
+  font-size: 1.28rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.app-nav {
+  position: relative;
+  z-index: 1;
+  gap: 10px;
+  margin-top: 34px;
+}
+
+.app-nav-item {
+  min-height: 54px;
+  padding: 0 18px;
+  color: #9aa39d;
+  border: 0;
+  border-radius: 14px;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.app-nav-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.app-nav-item.active {
+  color: #111515;
+  background: var(--app-accent);
+  border-color: transparent;
+}
+
+.app-user {
+  position: relative;
+  z-index: 1;
+  gap: 14px;
+  padding-top: 18px;
+  color: #b6c0ba;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-user span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-main {
+  padding: 0;
+  background: transparent;
+}
+
+.app-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 100px;
+  padding: 24px clamp(24px, 4vw, 48px);
+  background: rgba(248, 250, 246, 0.86);
+  border-bottom: 1px solid var(--app-line);
+  backdrop-filter: blur(16px);
+}
+
+.app-search {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  width: min(520px, 100%);
+  min-height: 54px;
+  padding: 0 16px;
+  color: var(--app-muted);
+  background: #eef1ed;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+}
+
+.app-search input {
+  min-width: 0;
+  color: var(--app-ink);
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quick-icon {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  color: var(--app-ink);
+  background: #ffffff;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+  cursor: pointer;
+  font-size: 1.3rem;
+  font-weight: 900;
+  box-shadow: 0 8px 22px rgba(20, 26, 22, 0.05);
+}
+
+.app-create-button {
+  gap: 8px;
+  padding-inline: 20px;
+}
+
+.app-view {
+  padding: clamp(28px, 4vw, 52px);
+}
+
+.app-view.active {
+  gap: 28px;
+}
+
+.app-heading {
+  align-items: center;
+}
+
+.app-heading h2 {
+  color: var(--app-ink);
+  font-size: clamp(2.1rem, 4vw, 3.45rem);
+  line-height: 0.98;
+}
+
+.app-heading > p {
+  color: var(--app-muted);
+  font-size: 1.04rem;
+}
+
+.metric-grid {
+  gap: 12px;
+}
+
+.metric-card,
+.panel {
+  color: var(--app-ink);
+  background: var(--app-card);
+  border: 1px solid var(--app-line);
+  border-radius: 18px;
+  box-shadow: var(--app-shadow);
+}
+
+.metric-card {
+  position: relative;
+  min-height: 116px;
+  gap: 12px;
+  padding: 22px;
+  overflow: hidden;
+}
+
+.metric-card::after {
+  position: absolute;
+  right: -20px;
+  bottom: -22px;
+  width: 64px;
+  height: 64px;
+  content: "";
+  background: rgba(184, 242, 70, 0.28);
+  border-radius: 50%;
+}
+
+.metric-card span,
+.panel-header span,
+.song-row small,
+.artist-list-item small,
+.release-item span,
+.social-grid span {
+  color: var(--app-muted);
+}
+
+.metric-card strong {
+  color: var(--app-ink);
+  font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.dashboard-grid,
+.calendar-layout,
+.artists-workspace {
+  gap: 18px;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.panel-header {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.panel-header h3 {
+  color: var(--app-ink);
+  font-size: 1.05rem;
+}
+
+.song-row,
+.artist-list-item,
+.release-item {
+  min-height: 66px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid transparent;
+  border-bottom-color: var(--app-line);
+  border-radius: 12px;
+}
+
+.song-row:hover,
+.song-row.active,
+.artist-list-item:hover,
+.artist-list-item.active {
+  color: var(--app-ink);
+  background: #f8fbf3;
+  border-color: rgba(150, 214, 42, 0.42);
+}
+
+.song-row b {
+  color: #5a8716;
+}
+
+.avatar {
+  color: #111515;
+  background: var(--app-accent);
+  border-radius: 50%;
+}
+
+.avatar.large {
+  width: 72px;
+  height: 72px;
+}
+
+.artist-profile {
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.artist-profile p {
+  color: var(--app-muted);
+}
+
+.app-shell .artist-tag {
+  color: #63820f !important;
+}
+
+.social-grid span {
+  background: #f8faf6;
+  border-color: var(--app-line);
+  border-radius: 14px;
+}
+
+.social-grid strong {
+  color: var(--app-ink);
+}
+
+.compact-form input,
+.compact-form select,
+.profile-form input,
+.profile-form select {
+  min-height: 50px;
+  color: var(--app-ink);
+  background: #fbfcfa;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+}
+
+.compact-form input:focus,
+.compact-form select:focus,
+.profile-form input:focus,
+.profile-form select:focus {
+  border-color: var(--app-accent-strong);
+  box-shadow: 0 0 0 4px rgba(184, 242, 70, 0.24);
+}
+
+.profile-form label {
+  color: var(--app-ink);
+}
+
+.calendar-toolbar {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.icon-button {
+  color: var(--app-ink);
+  background: #ffffff;
+  border-color: var(--app-line);
+  border-radius: 12px;
+}
+
+.calendar-grid {
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--app-line);
+  border-radius: 14px;
+}
+
+.calendar-weekday {
+  background: #fbfcfa;
+  border-bottom: 1px solid var(--app-line);
+}
+
+.calendar-empty,
+.calendar-day {
+  min-height: 112px;
+}
+
+.calendar-day {
+  color: var(--app-ink);
+  background: #ffffff;
+  border: 0;
+  border-right: 1px solid var(--app-line);
+  border-bottom: 1px solid var(--app-line);
+  border-radius: 0;
+}
+
+.calendar-day:hover {
+  background: #f7fbef;
+  border-color: var(--app-line);
+}
+
+.calendar-day span {
+  color: #315300;
+  background: #e3f6bf;
+  border-radius: 5px;
+}
+
+.bar-row {
+  color: var(--app-muted);
+}
+
+.bar-track {
+  height: 10px;
+  background: #e7ece4;
+}
+
+.bar-fill {
+  background: linear-gradient(90deg, var(--app-accent), #5e8f0e);
+}
+
+.empty-state,
+.empty-panel p {
+  color: var(--app-muted);
+}
+
+.empty-panel {
+  background: #fbfcfa;
+  border-color: var(--app-line);
+  border-radius: 16px;
+}
+
 @media (max-width: 900px) {
   .hero,
   .portal,

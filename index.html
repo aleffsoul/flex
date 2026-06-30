@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=database-1">
+    <link rel="stylesheet" href="styles.css?v=ui-2">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -189,6 +189,17 @@
       </aside>
 
       <main class="app-main">
+        <div class="app-topbar">
+          <label class="app-search">
+            <span>⌕</span>
+            <input type="search" id="appSearch" placeholder="Buscar artista ou música...">
+          </label>
+          <div class="topbar-actions">
+            <button class="quick-icon" type="button" aria-label="Central de notificações">◇</button>
+            <button class="button primary app-create-button" type="button" data-view="artists">+ Novo cadastro</button>
+          </div>
+        </div>
+
         <section class="app-view active" id="dashboardView" data-view-panel="dashboard">
           <div class="app-heading">
             <div>
@@ -350,7 +361,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=database-1"></script>
-    <script src="script.js?v=database-1"></script>
+    <script src="supabase.js?v=ui-2"></script>
+    <script src="script.js?v=ui-2"></script>
   </body>
 </html>
