@@ -39,6 +39,8 @@ const cancelArtistFormButton = document.querySelector("#cancelArtistFormButton")
 const deleteArtistButton = document.querySelector("#deleteArtistButton");
 const artistFormTitle = document.querySelector("#artistFormTitle");
 const artistFormEyebrow = document.querySelector("#artistFormEyebrow");
+const artistPhotoInput = document.querySelector("#artistPhotoInput");
+const artistPhotoPreview = document.querySelector("#artistPhotoPreview");
 
 const songStatuses = [
   { value: "rascunho", label: "Rascunho" },
@@ -155,6 +157,39 @@ function getFileName(formData, key) {
   return file && typeof file.name === "string" ? file.name : "";
 }
 
+function readImageFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadArtistPhoto(file) {
+  if (!file || !file.size) return "";
+  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const safeName = file.name
+    .replace(/\.[^/.]+$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "artist-photo";
+  const path = `${getUserId()}/${crypto.randomUUID()}-${safeName}.${extension}`;
+
+  const { error } = await supabaseClient.storage
+    .from("artist-photos")
+    .upload(path, file, {
+      cacheControl: "3600",
+      upsert: false
+    });
+
+  if (error) throw error;
+
+  const { data } = supabaseClient.storage.from("artist-photos").getPublicUrl(path);
+  return data.publicUrl || "";
+}
+
 function getSong(songId) {
   return getAllSongs().find((song) => song.id === songId);
 }
@@ -213,6 +248,21 @@ function closeArtistForm() {
   appState.editingArtistId = null;
 }
 
+function setArtistPhotoPreview(imageUrl, fallbackName = "FM") {
+  if (!artistPhotoPreview) return;
+  artistPhotoPreview.innerHTML = "";
+  artistPhotoPreview.classList.toggle("has-image", Boolean(imageUrl));
+
+  if (imageUrl) {
+    const image = document.createElement("img");
+    image.src = imageUrl;
+    image.alt = "Prévia da foto do artista";
+    artistPhotoPreview.appendChild(image);
+  } else {
+    artistPhotoPreview.textContent = getInitials(fallbackName);
+  }
+}
+
 function openArtistForm(artist = null) {
   const artistForm = document.querySelector("#artistForm");
   if (!artistForm) return;
@@ -226,6 +276,7 @@ function openArtistForm(artist = null) {
 
   if (artist) {
     artistForm.elements.photoUrl.value = artist.photoUrl || "";
+    setArtistPhotoPreview(artist.photoUrl, artist.name);
     artistForm.elements.displayName.value = artist.name || "";
     artistForm.elements.displayGenre.value = artist.genre || "";
     artistForm.elements.instagram.value = artist.socials.instagram || "";
@@ -233,6 +284,9 @@ function openArtistForm(artist = null) {
     artistForm.elements.instagramFollowers.value = artist.instagramFollowers || 0;
     artistForm.elements.spotifyFollowers.value = artist.spotifyFollowers || 0;
     artistForm.elements.bio.value = artist.bio || "";
+  } else {
+    setArtistPhotoPreview("", "FM");
+    artistForm.elements.photoUrl.value = "";
   }
 
   artistForm.hidden = false;
@@ -884,6 +938,22 @@ if (cancelArtistFormButton) {
   cancelArtistFormButton.addEventListener("click", closeArtistForm);
 }
 
+if (artistPhotoInput) {
+  artistPhotoInput.addEventListener("change", async () => {
+    const file = artistPhotoInput.files?.[0];
+    const artistForm = document.querySelector("#artistForm");
+    if (!file || !artistForm) return;
+
+    try {
+      const imageData = await readImageFile(file);
+      artistForm.elements.photoUrl.value = imageData;
+      setArtistPhotoPreview(imageData, artistForm.elements.displayName.value || "FM");
+    } catch (_error) {
+      setMessage(profileMessage, "Não foi possível carregar a imagem selecionada.", "error");
+    }
+  });
+}
+
 if (instrumentalToggle) {
   instrumentalToggle.addEventListener("change", syncLyricsVisibility);
 }
@@ -969,6 +1039,17 @@ document.addEventListener("submit", async (event) => {
     event.preventDefault();
     const formData = new FormData(event.target);
     const artistName = String(formData.get("displayName") || "").trim();
+    const editingArtist = getArtist(appState.editingArtistId);
+    const photoFile = formData.get("photoFile");
+    let uploadedPhotoUrl = "";
+
+    try {
+      uploadedPhotoUrl = await uploadArtistPhoto(photoFile);
+    } catch (error) {
+      setMessage(profileMessage, error.message || "Não foi possível enviar a foto do artista.", "error");
+      return;
+    }
+
     const payload = {
       owner_id: getUserId(),
       name: artistName,
@@ -979,7 +1060,7 @@ document.addEventListener("submit", async (event) => {
       spotify_profile: String(formData.get("spotifyProfile") || ""),
       instagram_followers: Number(formData.get("instagramFollowers") || 0),
       spotify_followers: Number(formData.get("spotifyFollowers") || 0),
-      photo_url: String(formData.get("photoUrl") || "")
+      photo_url: uploadedPhotoUrl || editingArtist?.photoUrl || ""
     };
 
     const query = appState.editingArtistId

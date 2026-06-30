@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=catalog-3">
+    <link rel="stylesheet" href="styles.css?v=catalog-4">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -289,10 +289,17 @@
               </div>
 
               <div class="song-form-grid artist-edit-grid">
-                <label>
-                  <span>Foto de perfil</span>
-                  <input type="url" name="photoUrl" placeholder="URL da foto do artista">
-                </label>
+                <div class="artist-photo-upload">
+                  <span class="field-label">Foto de perfil</span>
+                  <div class="artist-file-drop">
+                    <span class="artist-photo-preview avatar" id="artistPhotoPreview">FM</span>
+                    <label>
+                      <input type="file" name="photoFile" id="artistPhotoInput" accept="image/*">
+                      <input type="hidden" name="photoUrl">
+                      <small>Envie uma imagem quadrada para melhor resultado.</small>
+                    </label>
+                  </div>
+                </div>
                 <label>
                   <span>Nome artístico *</span>
                   <input type="text" name="displayName" placeholder="Nome do artista" required>
@@ -572,7 +579,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=catalog-3"></script>
-    <script src="script.js?v=catalog-3"></script>
+    <script src="supabase.js?v=catalog-4"></script>
+    <script src="script.js?v=catalog-4"></script>
   </body>
 </html>
