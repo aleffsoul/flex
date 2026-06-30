@@ -379,19 +379,33 @@ async function loadAppData() {
   const userId = getUserId();
   if (!userId) return false;
 
-  const [
-    profileResult,
-    artistsResult,
-    songsResult,
-    streamsResult,
-    releasesResult
-  ] = await Promise.all([
-    supabaseClient.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabaseClient.from("artists").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("songs").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("song_streams").select("*").order("month", { ascending: true }),
-    supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
-  ]);
+  let profileResult;
+  let artistsResult;
+  let songsResult;
+  let streamsResult;
+  let releasesResult;
+
+  try {
+    [
+      profileResult,
+      artistsResult,
+      songsResult,
+      streamsResult,
+      releasesResult
+    ] = await Promise.all([
+      supabaseClient.from("profiles").select("*").eq("id", userId).maybeSingle(),
+      supabaseClient.from("artists").select("*").order("created_at", { ascending: true }),
+      supabaseClient.from("songs").select("*").order("created_at", { ascending: true }),
+      supabaseClient.from("song_streams").select("*").order("month", { ascending: true }),
+      supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
+    ]);
+  } catch (error) {
+    const message = "Não foi possível conectar ao Supabase agora. O banco não respondeu, então os cadastros não foram carregados.";
+    setMessage(loginMessage, message, "error");
+    setMessage(appMessage, message, "error");
+    setMessage(profileMessage, message, "error");
+    return false;
+  }
 
   const loadError = [
     profileResult.error,
@@ -549,13 +563,17 @@ async function signIn(email, password) {
   setLoading(true);
   setMessage(loginMessage, "Conectando ao Supabase...");
 
-  const { error } = await supabaseClient.auth.signInWithPassword({
-    email,
-    password
-  });
+  try {
+    const { error } = await supabaseClient.auth.signInWithPassword({
+      email,
+      password
+    });
 
-  if (error) {
-    setMessage(loginMessage, error.message, "error");
+    if (error) {
+      setMessage(loginMessage, error.message, "error");
+    }
+  } catch (_error) {
+    setMessage(loginMessage, "Não foi possível conectar ao Supabase. Verifique se o projeto está ativo e tente novamente.", "error");
   }
 
   setLoading(false);
@@ -565,20 +583,24 @@ async function signUp(email, password) {
   setLoading(true);
   setMessage(loginMessage, "Criando conta...");
 
-  const { data, error } = await supabaseClient.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.href
-    }
-  });
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.href
+      }
+    });
 
-  if (error) {
-    setMessage(loginMessage, error.message, "error");
-  } else if (data.session) {
-    setMessage(loginMessage, "Conta criada e sessão iniciada.", "success");
-  } else {
-    setMessage(loginMessage, "Conta criada. Confira seu e-mail para confirmar o acesso.", "success");
+    if (error) {
+      setMessage(loginMessage, error.message, "error");
+    } else if (data.session) {
+      setMessage(loginMessage, "Conta criada e sessão iniciada.", "success");
+    } else {
+      setMessage(loginMessage, "Conta criada. Confira seu e-mail para confirmar o acesso.", "success");
+    }
+  } catch (_error) {
+    setMessage(loginMessage, "Não foi possível conectar ao Supabase. Verifique se o projeto está ativo e tente novamente.", "error");
   }
 
   setLoading(false);
