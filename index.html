@@ -8,7 +8,7 @@
       name="description"
       content="Flex Music, gravadora para artistas virtuais, universos sonoros e identidades digitais."
     >
-    <link rel="stylesheet" href="styles.css?v=ui-3">
+    <link rel="stylesheet" href="styles.css?v=artists-1">
   </head>
   <body>
     <header class="site-header" data-public-shell>
@@ -248,30 +248,39 @@
         </section>
 
         <section class="app-view" id="artistsView" data-view-panel="artists">
-          <div class="app-heading">
+          <div class="app-heading artists-heading">
             <div>
-              <p class="eyebrow">Catálogo</p>
+              <p class="eyebrow">Nosso cast</p>
               <h2>Artistas</h2>
+              <p>Perfis, contatos, catálogo e desempenho em um só lugar.</p>
             </div>
-            <p>Selecione um artista para ver músicas, redes sociais e estatísticas.</p>
+            <button class="button primary" id="newArtistButton" type="button">+ Novo artista</button>
           </div>
 
-          <div class="artists-workspace">
-            <div class="panel artist-directory">
-              <div class="panel-header">
-                <h3>Roster</h3>
-                <span id="artistCountLabel">0 artistas</span>
-              </div>
-              <div class="artist-list" id="artistList"></div>
-              <form class="compact-form add-artist-form" id="artistForm">
+          <div class="artist-filter-bar">
+            <label class="artist-search">
+              <span>⌕</span>
+              <input type="search" id="artistSearch" placeholder="Buscar artista...">
+            </label>
+            <select id="artistGenreFilter">
+              <option value="">Todos os gêneros</option>
+            </select>
+            <span id="artistCountLabel">0 artistas</span>
+          </div>
+
+          <form class="compact-form add-artist-form artist-create-panel" id="artistForm" hidden>
+            <div class="panel-header">
+              <h3>Novo artista</h3>
+              <span>Cadastro rápido</span>
+            </div>
+            <div class="artist-create-grid">
                 <input type="text" name="name" placeholder="Nome do artista" required>
-                <input type="text" name="genre" placeholder="Gênero / posicionamento">
+                <input type="text" name="genre" placeholder="Gênero musical">
                 <button class="button primary" type="submit">Cadastrar artista</button>
-              </form>
             </div>
+          </form>
 
-            <div class="panel artist-detail" id="artistDetail"></div>
-          </div>
+          <div class="artist-card-grid" id="artistList"></div>
         </section>
 
         <section class="app-view" id="calendarView" data-view-panel="calendar">
@@ -361,7 +370,7 @@
       <span id="year"></span>
     </footer>
 
-    <script src="supabase.js?v=ui-3"></script>
-    <script src="script.js?v=ui-3"></script>
+    <script src="supabase.js?v=artists-1"></script>
+    <script src="script.js?v=artists-1"></script>
   </body>
 </html>

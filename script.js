@@ -14,6 +14,9 @@ const profileMessage = document.querySelector("#profileMessage");
 const releaseForm = document.querySelector("#releaseForm");
 const releaseArtistSelect = document.querySelector("#releaseArtistSelect");
 const appSearch = document.querySelector("#appSearch");
+const artistSearch = document.querySelector("#artistSearch");
+const artistGenreFilter = document.querySelector("#artistGenreFilter");
+const newArtistButton = document.querySelector("#newArtistButton");
 
 const appState = {
   session: null,
@@ -29,7 +32,9 @@ const appState = {
     phone: "",
     country: "Brasil",
     currency: "BRL"
-  }
+  },
+  artistSearch: "",
+  artistGenre: ""
 };
 
 if (year) {
@@ -188,6 +193,9 @@ async function loadAppData() {
     genre: artist.genre || "",
     avatar: artist.avatar || getInitials(artist.name),
     bio: artist.bio || "",
+    instagramFollowers: Number(artist.instagram_followers || 0),
+    spotifyFollowers: Number(artist.spotify_followers || 0),
+    photoUrl: artist.photo_url || "",
     socials: {
       instagram: artist.instagram || "",
       tiktok: artist.tiktok || "",
@@ -294,6 +302,7 @@ function renderNavigation() {
 }
 
 function focusArtistForm() {
+  document.querySelector("#artistForm")?.removeAttribute("hidden");
   requestAnimationFrame(() => {
     document.querySelector("#artistForm input[name='name']")?.focus();
   });
@@ -333,85 +342,53 @@ function renderDashboard() {
 function renderArtists() {
   const artistList = document.querySelector("#artistList");
   const artistCountLabel = document.querySelector("#artistCountLabel");
-  const detail = document.querySelector("#artistDetail");
+  const genres = [...new Set(appState.artists.map((artist) => artist.genre).filter(Boolean))].sort();
+  const searchTerm = appState.artistSearch.toLowerCase();
+  const filteredArtists = appState.artists.filter((artist) => {
+    const matchesSearch = !searchTerm ||
+      artist.name.toLowerCase().includes(searchTerm) ||
+      artist.genre.toLowerCase().includes(searchTerm);
+    const matchesGenre = !appState.artistGenre || artist.genre === appState.artistGenre;
+    return matchesSearch && matchesGenre;
+  });
 
-  artistCountLabel.textContent = `${appState.artists.length} artistas`;
-
-  artistList.innerHTML = appState.artists.length
-    ? appState.artists
-        .map((artist) => `
-          <button class="artist-list-item ${artist.id === appState.selectedArtistId ? "active" : ""}" type="button" data-artist-id="${artist.id}">
-            <span class="avatar">${artist.avatar}</span>
-            <span>
-              <strong>${artist.name}</strong>
-              <small>${artist.genre || "Sem gênero definido"}</small>
-            </span>
-          </button>
-        `)
-        .join("")
-    : "<p class='empty-state'>Nenhum artista cadastrado. Crie o primeiro abaixo.</p>";
-
-  const selectedArtist = getArtist(appState.selectedArtistId);
-  if (!selectedArtist) {
-    detail.innerHTML = `
-      <div class="empty-panel">
-        <h3>Crie seu primeiro artista virtual</h3>
-        <p>Depois disso você poderá cadastrar músicas, redes sociais, streams e lançamentos.</p>
-      </div>
-    `;
-    return;
+  if (artistGenreFilter) {
+    artistGenreFilter.innerHTML = [
+      "<option value=''>Todos os gêneros</option>",
+      ...genres.map((genre) => `<option value="${genre}" ${genre === appState.artistGenre ? "selected" : ""}>${genre}</option>`)
+    ].join("");
   }
 
-  const selectedSong = selectedArtist.songs.find((song) => song.id === appState.selectedSongId) || selectedArtist.songs[0];
-  appState.selectedSongId = selectedSong?.id || null;
+  artistCountLabel.textContent = `${filteredArtists.length} artistas`;
 
-  detail.innerHTML = `
-    <div class="artist-profile">
-      <span class="avatar large">${selectedArtist.avatar}</span>
-      <div>
-        <p class="artist-tag">${selectedArtist.genre || "Artista virtual"}</p>
-        <h3>${selectedArtist.name}</h3>
-        <p>${selectedArtist.bio || "Sem bio cadastrada ainda."}</p>
-      </div>
-    </div>
-
-    <div class="social-grid">
-      <span>Instagram <strong>${selectedArtist.socials.instagram || "Não informado"}</strong></span>
-      <span>TikTok <strong>${selectedArtist.socials.tiktok || "Não informado"}</strong></span>
-      <span>YouTube <strong>${selectedArtist.socials.youtube || "Não informado"}</strong></span>
-    </div>
-
-    <div class="catalog-layout">
-      <div>
-        <div class="panel-header">
-          <h3>Catálogo</h3>
-          <span>${selectedArtist.songs.length} músicas</span>
-        </div>
-        <div class="song-list">
-          ${selectedArtist.songs.length ? selectedArtist.songs.map((song) => `
-            <button class="song-row ${song.id === selectedSong?.id ? "active" : ""}" type="button" data-song-id="${song.id}">
-              <span>
-                <strong>${song.title}</strong>
-                <small>${song.releaseDate ? formatDate(song.releaseDate) : "Sem data"} • ${song.distributor || "Sem distribuidora"}</small>
-              </span>
-              <b>${formatNumber(getSongTotal(song))}</b>
-            </button>
-          `).join("") : "<p class='empty-state'>Nenhuma música cadastrada para este artista.</p>"}
-        </div>
-      </div>
-
-      <div class="song-insights">
-        ${selectedSong ? renderSongInsights(selectedSong) : "<p class='empty-state'>Selecione ou cadastre uma música para ver streams mês a mês.</p>"}
-      </div>
-    </div>
-
-    <form class="compact-form add-song-form" id="songForm">
-      <input type="text" name="title" placeholder="Nova música" required>
-      <input type="date" name="releaseDate" required>
-      <input type="text" name="distributor" placeholder="Distribuidora" required>
-      <button class="button primary" type="submit">Cadastrar música</button>
-    </form>
-  `;
+  artistList.innerHTML = filteredArtists.length
+    ? filteredArtists
+        .map((artist) => `
+          <article class="artist-summary-card">
+            <div class="artist-card-head">
+              ${artist.photoUrl
+                ? `<img class="artist-photo" src="${artist.photoUrl}" alt="${artist.name}">`
+                : `<span class="artist-photo avatar">${artist.avatar}</span>`}
+              <div>
+                <h3>${artist.name}</h3>
+                <p>${artist.genre || "Gênero não informado"}</p>
+              </div>
+            </div>
+            <p class="artist-bio">${artist.bio || "Sem biografia cadastrada."}</p>
+            <div class="artist-stats">
+              <span><strong>${formatNumber(artist.songs.length)}</strong><small>Lanç.</small></span>
+              <span><strong>${formatNumber(artist.songs.reduce((total, song) => total + getSongTotal(song), 0))}</strong><small>Streams</small></span>
+              <span><strong>${formatNumber(artist.instagramFollowers)}</strong><small>Instagram</small></span>
+              <span><strong>${formatNumber(artist.spotifyFollowers)}</strong><small>Spotify</small></span>
+            </div>
+            <div class="artist-card-footer">
+              <small>IG: ${artist.socials.instagram || "sem @ cadastrado"}</small>
+              <button class="catalog-link" type="button" data-open-catalog="${artist.id}">Ver catálogo →</button>
+            </div>
+          </article>
+        `)
+        .join("")
+    : "<div class='empty-panel'><h3>Nenhum artista encontrado</h3><p>Crie um novo artista ou ajuste a busca/filtro.</p></div>";
 }
 
 function renderSongInsights(song) {
@@ -526,6 +503,7 @@ async function createInitialStreamRows(songId) {
 document.addEventListener("click", (event) => {
   const navButton = event.target.closest("[data-view]");
   const artistButton = event.target.closest("[data-artist-id]");
+  const catalogButton = event.target.closest("[data-open-catalog]");
   const songButton = event.target.closest("[data-song-id]");
   const dashboardSong = event.target.closest("[data-view-song]");
   const calendarDay = event.target.closest("[data-calendar-date]");
@@ -542,6 +520,12 @@ document.addEventListener("click", (event) => {
     appState.selectedArtistId = artistButton.dataset.artistId;
     appState.selectedSongId = getArtist(appState.selectedArtistId).songs[0]?.id || null;
     renderArtists();
+  }
+
+  if (catalogButton) {
+    appState.selectedArtistId = catalogButton.dataset.openCatalog;
+    appState.selectedSongId = getArtist(appState.selectedArtistId).songs[0]?.id || null;
+    setMessage(profileMessage, "Catálogo detalhado será a próxima etapa desta área.", "success");
   }
 
   if (songButton) {
@@ -562,6 +546,24 @@ document.addEventListener("click", (event) => {
     releaseForm.title.focus();
   }
 });
+
+if (newArtistButton) {
+  newArtistButton.addEventListener("click", focusArtistForm);
+}
+
+if (artistSearch) {
+  artistSearch.addEventListener("input", () => {
+    appState.artistSearch = artistSearch.value.trim();
+    renderArtists();
+  });
+}
+
+if (artistGenreFilter) {
+  artistGenreFilter.addEventListener("change", () => {
+    appState.artistGenre = artistGenreFilter.value;
+    renderArtists();
+  });
+}
 
 if (appSearch) {
   appSearch.addEventListener("input", () => {
@@ -620,6 +622,7 @@ document.addEventListener("submit", async (event) => {
     appState.selectedArtistId = data.id;
     appState.selectedSongId = null;
     event.target.reset();
+    event.target.hidden = true;
     await loadAppData();
     renderApp();
   }
