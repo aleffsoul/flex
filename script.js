@@ -8,6 +8,7 @@ const loginForm = document.querySelector("#loginForm");
 const signupButton = document.querySelector("#signupButton");
 const logoutButton = document.querySelector("#logoutButton");
 const loginMessage = document.querySelector("#loginMessage");
+const appMessage = document.querySelector("#appMessage");
 const appUserEmail = document.querySelector("#appUserEmail");
 const profileForm = document.querySelector("#profileForm");
 const profileMessage = document.querySelector("#profileMessage");
@@ -104,6 +105,23 @@ function formatNumber(value) {
 function formatDate(dateString) {
   const date = new Date(`${dateString}T12:00:00`);
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+}
+
+function escapeHTML(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function escapeAttribute(value) {
+  return escapeHTML(value).replace(/`/g, "&#96;");
+}
+
+function getStatusClass(status) {
+  return String(status || "rascunho").replace(/[^a-z0-9_-]/gi, "");
 }
 
 function getUserId() {
@@ -242,7 +260,7 @@ function openSongForm(song = null) {
   const selectedArtist = getArtist(song?.artistId || appState.selectedArtistId);
   if (songArtistSelect) {
     songArtistSelect.innerHTML = appState.artists
-      .map((artist) => `<option value="${artist.id}" ${artist.id === selectedArtist?.id ? "selected" : ""}>${artist.name}</option>`)
+      .map((artist) => `<option value="${escapeAttribute(artist.id)}" ${artist.id === selectedArtist?.id ? "selected" : ""}>${escapeHTML(artist.name)}</option>`)
       .join("");
   }
 
@@ -359,7 +377,7 @@ function getCredentials() {
 
 async function loadAppData() {
   const userId = getUserId();
-  if (!userId) return;
+  if (!userId) return false;
 
   const [
     profileResult,
@@ -369,16 +387,28 @@ async function loadAppData() {
     releasesResult
   ] = await Promise.all([
     supabaseClient.from("profiles").select("*").eq("id", userId).maybeSingle(),
-    supabaseClient.from("artists").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("songs").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("song_streams").select("*").order("month", { ascending: true }),
-    supabaseClient.from("releases").select("*").order("release_date", { ascending: true })
+    supabaseClient.from("artists").select("*").eq("owner_id", userId).order("created_at", { ascending: true }),
+    supabaseClient.from("songs").select("*").eq("owner_id", userId).order("created_at", { ascending: true }),
+    supabaseClient.from("song_streams").select("*").eq("owner_id", userId).order("month", { ascending: true }),
+    supabaseClient.from("releases").select("*").eq("owner_id", userId).order("release_date", { ascending: true })
   ]);
 
-  if (artistsResult.error) {
-    setMessage(loginMessage, artistsResult.error.message, "error");
-    return;
+  const loadError = [
+    profileResult.error,
+    artistsResult.error,
+    songsResult.error,
+    streamsResult.error,
+    releasesResult.error
+  ].find(Boolean);
+
+  if (loadError) {
+    setMessage(loginMessage, loadError.message, "error");
+    setMessage(appMessage, loadError.message, "error");
+    setMessage(profileMessage, loadError.message, "error");
+    return false;
   }
+
+  setMessage(appMessage, "");
 
   if (!profileResult.data && !profileResult.error) {
     await supabaseClient.from("profiles").upsert({
@@ -391,9 +421,9 @@ async function loadAppData() {
 
   const profile = profileResult.data || {};
   const artistsData = artistsResult.data || [];
-  const songsData = songsResult.error ? [] : (songsResult.data || []);
-  const streamsData = streamsResult.error ? [] : (streamsResult.data || []);
-  const releasesData = releasesResult.error ? [] : (releasesResult.data || []);
+  const songsData = songsResult.data || [];
+  const streamsData = streamsResult.data || [];
+  const releasesData = releasesResult.data || [];
   const songsByArtist = new Map();
   const streamsBySong = new Map();
 
@@ -490,6 +520,8 @@ async function loadAppData() {
   if (selectedArtist && !selectedArtist.songs.some((song) => song.id === appState.selectedSongId)) {
     appState.selectedSongId = selectedArtist.songs[0]?.id || null;
   }
+
+  return true;
 }
 
 async function renderSession(session) {
@@ -508,8 +540,8 @@ async function renderSession(session) {
 
   if (isLoggedIn) {
     setMessage(loginMessage, "");
-    await loadAppData();
-    renderApp();
+    const loaded = await loadAppData();
+    if (loaded) renderApp();
   }
 }
 
@@ -591,10 +623,10 @@ function renderDashboard() {
         .sort((a, b) => getSongTotal(b) - getSongTotal(a))
         .slice(0, 5)
         .map((song) => `
-          <button class="song-row" type="button" data-view-song="${song.artistId}:${song.id}">
+          <button class="song-row" type="button" data-view-song="${escapeAttribute(`${song.artistId}:${song.id}`)}">
             <span>
-              <strong>${song.title}</strong>
-              <small>${song.artistName}</small>
+              <strong>${escapeHTML(song.title)}</strong>
+              <small>${escapeHTML(song.artistName)}</small>
             </span>
             <b>${formatNumber(getSongTotal(song))}</b>
           </button>
@@ -644,7 +676,7 @@ function renderArtists() {
   if (artistGenreFilter) {
     artistGenreFilter.innerHTML = [
       "<option value=''>Todos os gêneros</option>",
-      ...genres.map((genre) => `<option value="${genre}" ${genre === appState.artistGenre ? "selected" : ""}>${genre}</option>`)
+      ...genres.map((genre) => `<option value="${escapeAttribute(genre)}" ${genre === appState.artistGenre ? "selected" : ""}>${escapeHTML(genre)}</option>`)
     ].join("");
   }
 
@@ -656,15 +688,15 @@ function renderArtists() {
           <article class="artist-summary-card">
             <div class="artist-card-head">
               ${artist.photoUrl
-                ? `<img class="artist-photo" src="${artist.photoUrl}" alt="${artist.name}">`
-                : `<span class="artist-photo avatar">${artist.avatar}</span>`}
+                ? `<img class="artist-photo" src="${escapeAttribute(artist.photoUrl)}" alt="${escapeAttribute(artist.name)}">`
+                : `<span class="artist-photo avatar">${escapeHTML(artist.avatar)}</span>`}
               <div>
-                <h3>${artist.name}</h3>
-                <p>${artist.genre || "Gênero não informado"}</p>
+                <h3>${escapeHTML(artist.name)}</h3>
+                <p>${escapeHTML(artist.genre || "Gênero não informado")}</p>
               </div>
-              <button class="artist-edit-button" type="button" data-edit-artist="${artist.id}">Editar</button>
+              <button class="artist-edit-button" type="button" data-edit-artist="${escapeAttribute(artist.id)}">Editar</button>
             </div>
-            <p class="artist-bio">${artist.bio || "Sem biografia cadastrada."}</p>
+            <p class="artist-bio">${escapeHTML(artist.bio || "Sem biografia cadastrada.")}</p>
             <div class="artist-stats">
               <span><strong>${formatNumber(artist.songs.filter((song) => song.status === "publicada").length)}/${formatNumber(artist.songs.length)}</strong><small>Lanç.</small></span>
               <span><strong>${formatNumber(artist.songs.reduce((total, song) => total + getSongTotal(song), 0))}</strong><small>Streams</small></span>
@@ -672,9 +704,9 @@ function renderArtists() {
               <span><strong>${formatNumber(artist.spotifyFollowers)}</strong><small>Spotify</small></span>
             </div>
             <div class="artist-card-footer">
-              <small>IG: ${artist.socials.instagram || "sem @ cadastrado"}</small>
+              <small>IG: ${escapeHTML(artist.socials.instagram || "sem @ cadastrado")}</small>
               <div class="artist-card-actions">
-                <button class="catalog-link" type="button" data-open-catalog="${artist.id}">Ver catálogo →</button>
+                <button class="catalog-link" type="button" data-open-catalog="${escapeAttribute(artist.id)}">Ver catálogo →</button>
               </div>
             </div>
           </article>
@@ -696,7 +728,7 @@ function renderArtistCatalog(artist) {
 
   if (songArtistSelect) {
     songArtistSelect.innerHTML = appState.artists
-      .map((item) => `<option value="${item.id}" ${item.id === artist.id ? "selected" : ""}>${item.name}</option>`)
+      .map((item) => `<option value="${escapeAttribute(item.id)}" ${item.id === artist.id ? "selected" : ""}>${escapeHTML(item.name)}</option>`)
       .join("");
   }
 
@@ -712,7 +744,7 @@ function renderArtistCatalog(artist) {
     songStatusGrid.innerHTML = songStatuses
       .map((status) => `
         <button class="song-status-card ${appState.songStatus === status.value ? "active" : ""}" type="button" data-song-status="${status.value}">
-          <span>${status.label}</span>
+          <span>${escapeHTML(status.label)}</span>
           <strong>${formatNumber(counts[status.value] || 0)}</strong>
         </button>
       `)
@@ -735,28 +767,28 @@ function renderArtistCatalog(artist) {
             <article class="song-table-row">
               <div class="song-release-cell">
                 ${song.coverUrl
-                  ? `<img class="song-cover" src="${song.coverUrl}" alt="Capa de ${song.title}">`
+                  ? `<img class="song-cover" src="${escapeAttribute(song.coverUrl)}" alt="Capa de ${escapeAttribute(song.title)}">`
                   : `<span class="song-cover song-cover-placeholder">♪</span>`}
                 <div>
-                  <h3>${song.title}</h3>
-                  <p>${artist.name} • ${song.type || "Single"}</p>
+                  <h3>${escapeHTML(song.title)}</h3>
+                  <p>${escapeHTML(artist.name)} • ${escapeHTML(song.type || "Single")}</p>
                   <div class="song-identifiers">
-                    <button class="song-edit-button" type="button" data-song-edit="${song.id}">Editar</button>
-                    <span>ISRC ${song.isrc || "a definir"}</span>
-                    <span>UPC ${song.upc || "a definir"}</span>
+                    <button class="song-edit-button" type="button" data-song-edit="${escapeAttribute(song.id)}">Editar</button>
+                    <span>ISRC ${escapeHTML(song.isrc || "a definir")}</span>
+                    <span>UPC ${escapeHTML(song.upc || "a definir")}</span>
                   </div>
                   ${audioSource ? `
                     <div class="song-audio-actions">
-                      <button class="song-audio-button" type="button" data-audio-play="${song.id}">Play</button>
-                      <a class="song-audio-button" href="${audioSource}" download="${song.title || "musica"}">Baixar</a>
+                      <button class="song-audio-button" type="button" data-audio-play="${escapeAttribute(song.id)}">Play</button>
+                      <a class="song-audio-button" href="${escapeAttribute(audioSource)}" download="${escapeAttribute(song.title || "musica")}">Baixar</a>
                     </div>
                   ` : ""}
                 </div>
               </div>
-              <span class="status-pill status-${song.status}">${getSongStatusLabel(song.status)}</span>
+              <span class="status-pill status-${getStatusClass(song.status)}">${escapeHTML(getSongStatusLabel(song.status))}</span>
               <span class="song-date">${song.releaseDate ? formatDate(song.releaseDate) : "A definir"}</span>
-              <span class="distributor-pill">${song.distributor || "Sem distribuidora"}</span>
-              <button class="streams-link" type="button" data-song-id="${song.id}">
+              <span class="distributor-pill">${escapeHTML(song.distributor || "Sem distribuidora")}</span>
+              <button class="streams-link" type="button" data-song-id="${escapeAttribute(song.id)}">
                 ${formatNumber(getSongTotal(song))} streams
               </button>
             </article>
@@ -772,7 +804,7 @@ function renderSongInsights(song) {
 
   return `
     <div class="panel-header">
-      <h3>${song.title}</h3>
+      <h3>${escapeHTML(song.title)}</h3>
       <span>${formatNumber(getSongTotal(song))} streams</span>
     </div>
     <div class="stream-chart">
@@ -813,7 +845,7 @@ function renderCalendar() {
     return `
       <button class="calendar-day" type="button" data-calendar-date="${date}">
         <strong>${day}</strong>
-        ${releases.map((release) => `<span>${release.title}</span>`).join("")}
+        ${releases.map((release) => `<span>${escapeHTML(release.title)}</span>`).join("")}
       </button>
     `;
   });
@@ -825,7 +857,7 @@ function renderCalendar() {
   ].join("");
 
   releaseArtistSelect.innerHTML = appState.artists.length
-    ? appState.artists.map((artist) => `<option value="${artist.id}">${artist.name}</option>`).join("")
+    ? appState.artists.map((artist) => `<option value="${escapeAttribute(artist.id)}">${escapeHTML(artist.name)}</option>`).join("")
     : "<option value=''>Cadastre um artista primeiro</option>";
   releaseArtistSelect.disabled = !appState.artists.length;
 
@@ -842,8 +874,8 @@ function renderReleaseItems(releases) {
       const artist = getArtist(release.artistId);
       return `
         <article class="release-item">
-          <strong>${release.title}</strong>
-          <span>${formatDate(release.date)} • ${artist?.name || "Artista removido"} • ${release.distributor || "Sem distribuidora"}</span>
+          <strong>${escapeHTML(release.title)}</strong>
+          <span>${formatDate(release.date)} • ${escapeHTML(artist?.name || "Artista removido")} • ${escapeHTML(release.distributor || "Sem distribuidora")}</span>
         </article>
       `;
     })
@@ -953,10 +985,11 @@ document.addEventListener("click", (event) => {
 
     if (appState.currentAudio?.audio) {
       appState.currentAudio.audio.pause();
+      appState.currentAudio.button.textContent = "Play";
     }
 
     const audio = new Audio(audioSource);
-    appState.currentAudio = { songId: song.id, audio };
+    appState.currentAudio = { songId: song.id, audio, button: audioButton };
     audio.play()
       .then(() => {
         audioButton.textContent = "Pausar";
@@ -1083,8 +1116,7 @@ if (deleteArtistButton) {
     closeArtistForm();
     appState.selectedArtistId = null;
     appState.selectedSongId = null;
-    await loadAppData();
-    renderApp();
+    if (await loadAppData()) renderApp();
   });
 }
 
@@ -1188,8 +1220,7 @@ document.addEventListener("submit", async (event) => {
     event.target.reset();
     event.target.hidden = true;
     appState.editingArtistId = null;
-    await loadAppData();
-    renderApp();
+    if (await loadAppData()) renderApp();
   }
 
   if (event.target.id === "songForm") {
@@ -1202,6 +1233,7 @@ document.addEventListener("submit", async (event) => {
     const audioFileName = getFileName(formData, "audioFile") || editingSong?.audioFileName || "";
     const coverFile = formData.get("coverFile");
     const audioFile = formData.get("audioFile");
+    const existingAudioUrl = editingSong ? getAudioSource(editingSong) : "";
     let uploadedCoverUrl = "";
     let uploadedAudioUrl = "";
 
@@ -1243,7 +1275,8 @@ document.addEventListener("submit", async (event) => {
       lyrics: isInstrumental ? "" : String(formData.get("lyrics") || ""),
       is_instrumental: isInstrumental,
       cover_file_name: coverFileName,
-      audio_file_name: uploadedAudioUrl || audioFileName
+      audio_url: uploadedAudioUrl || existingAudioUrl || "",
+      audio_file_name: audioFileName
     };
 
     const query = appState.editingSongId
@@ -1266,8 +1299,7 @@ document.addEventListener("submit", async (event) => {
     event.target.reset();
     event.target.hidden = true;
     appState.editingSongId = null;
-    await loadAppData();
-    renderApp();
+    if (await loadAppData()) renderApp();
   }
 });
 
@@ -1295,8 +1327,7 @@ if (releaseForm) {
     }
 
     releaseForm.reset();
-    await loadAppData();
-    renderApp();
+    if (await loadAppData()) renderApp();
   });
 }
 
@@ -1338,8 +1369,7 @@ if (profileForm) {
     }
 
     profileForm.elements.newPassword.value = "";
-    await loadAppData();
-    renderProfile();
+    if (await loadAppData()) renderProfile();
     setMessage(profileMessage, "Perfil salvo com sucesso.", "success");
   });
 }

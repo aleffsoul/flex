@@ -479,6 +479,10 @@ h3 {
   color: var(--lime);
 }
 
+.app-message {
+  margin: -10px 0 18px;
+}
+
 .portal-status {
   display: flex;
   align-items: center;
