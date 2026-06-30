@@ -1220,12 +1220,19 @@ h3 {
 .song-row,
 .artist-list-item,
 .release-item {
+  color: var(--app-ink);
   min-height: 66px;
   padding: 14px;
   background: #ffffff;
   border: 1px solid transparent;
   border-bottom-color: var(--app-line);
   border-radius: 12px;
+}
+
+.song-row strong,
+.artist-list-item strong,
+.release-item strong {
+  color: var(--app-ink);
 }
 
 .song-row:hover,
